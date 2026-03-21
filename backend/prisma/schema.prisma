@@ -7,6 +7,59 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ==================== ENUMS ====================
+
+enum PaperTier {
+  ENTRY
+  STANDARD
+  PREMIUM
+  ELITE
+
+  @@map("paper_tier")
+}
+
+enum PaperStatus {
+  PENDING
+  UNDER_REVIEW
+  COMPLETED
+
+  @@map("paper_status")
+}
+
+enum ReviewerType {
+  AI
+  HUMAN
+
+  @@map("reviewer_type")
+}
+
+enum AgentType {
+  REVIEWER
+  ANALYST
+  CURATOR
+
+  @@map("agent_type")
+}
+
+enum AgentTier {
+  ENTRY
+  STANDARD
+  PREMIUM
+  ELITE
+
+  @@map("agent_tier")
+}
+
+enum SkillLevel {
+  NOVICE
+  PROFICIENT
+  EXPERT
+
+  @@map("skill_level")
+}
+
+// ==================== MODELS ====================
+
 model Paper {
   id          String   @id @default(uuid())
   title       String
@@ -18,24 +71,31 @@ model Paper {
   pdfKey      String   @map("pdf_key")
   doi         String?  @unique
   metadata    Json     @default("{}")
+  
+  // Qualification Engine: Skills
+  extractedSkills String[] @default([]) @map("extracted_skills")
+  requiredSkills  String[] @default([]) @map("required_skills")
+  skillConfidence Float?   @map("skill_confidence")
+  
+  // Qualification Engine: Conference & Tier
+  conferenceId    String?  @map("conference_id")
+  tier            PaperTier @default(ENTRY)
+  status          PaperStatus @default(PENDING)
+  
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
   reviews     Review[]
+  assignedAgents String[] @default([]) @map("assigned_agents")
 
   @@index([field])
   @@index([keywords])
   @@index([createdAt])
   @@index([title])
+  @@index([tier])
+  @@index([status])
   @@map("papers")
-}
-
-enum ReviewerType {
-  AI
-  HUMAN
-
-  @@map("reviewer_type")
 }
 
 model Review {
@@ -46,6 +106,11 @@ model Review {
   content         Json
   isAccepted      Boolean?     @map("is_accepted")
   confidenceScore Float?       @map("confidence_score")
+  
+  // Qualification Engine: Context at review time
+  agentTier       String?      @map("agent_tier") // Snapshot of tier
+  skillMatchScore Float?       @map("skill_match_score") // Match %
+  
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
@@ -58,12 +123,48 @@ model Review {
   @@map("reviews")
 }
 
-enum AgentType {
-  REVIEWER
-  ANALYST
-  CURATOR
+model AgentSkill {
+  id          String    @id @default(uuid())
+  agentId     String    @map("agent_id")
+  name        String
+  level       SkillLevel @default(NOVICE)
+  verified    Boolean   @default(false)
+  reviewCount Int       @default(0) @map("review_count")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  @@map("agent_type")
+  @@unique([agentId, name])
+  @@index([agentId])
+  @@index([name])
+  @@map("agent_skills")
+}
+
+model AgentReputation {
+  id                String   @id @default(uuid())
+  agentId           String   @unique @map("agent_id")
+  
+  // Tier
+  tier              AgentTier @default(ENTRY)
+  
+  // Core metrics
+  reviewCount       Int      @default(0) @map("review_count")
+  accuracyScore     Float    @default(0) @map("accuracy_score") // 0-100
+  helpfulnessScore  Float    @default(0) @map("helpfulness_score") // 0-100
+  consistencyScore  Float    @default(0) @map("consistency_score") // 0-100
+  
+  // Calculated reputation (0-100)
+  overallReputation Float    @default(0) @map("overall_reputation")
+  
+  // Rate limiting
+  reviewsThisWeek   Int      @default(0) @map("reviews_this_week")
+  lastReviewAt      DateTime? @map("last_review_at")
+  
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@index([tier])
+  @@index([overallReputation])
+  @@map("agent_reputations")
 }
 
 model AgentConfig {
@@ -71,20 +172,19 @@ model AgentConfig {
   name           String   @unique
   agentType      AgentType @default(REVIEWER) @map("agent_type")
   
-  // Skill file references (update to your frontend domain)
-  // Example: https://revio-six.vercel.app/SKILL.md
-  skillsUrl      String   @default("https://YOUR-APP.vercel.app/SKILL.md") @map("skills_url")
-  reviewUrl      String   @default("https://YOUR-APP.vercel.app/REVIEW.md") @map("review_url")
-  fieldsUrl      String   @default("https://YOUR-APP.vercel.app/FIELDS.md") @map("fields_url")
-  ethicsUrl      String   @default("https://YOUR-APP.vercel.app/ETHICS.md") @map("ethics_url")
+  // Skill file references (relative paths)
+  skillsUrl      String   @default("/SKILL.md") @map("skills_url")
+  reviewUrl      String   @default("/REVIEW.md") @map("review_url")
+  fieldsUrl      String   @default("/FIELDS.md") @map("fields_url")
+  ethicsUrl      String   @default("/ETHICS.md") @map("ethics_url")
   
-  // Legacy field - now references skillsUrl
+  // Legacy field
   skillsMarkdown String   @map("skills_markdown")
   
   // Configuration
   tone           String   @default("Academic")
   systemPrompt   String   @map("system_prompt")
-  fields         String[] @default([]) // Expertise areas
+  fields         String[] @default([])
   
   // Versioning
   version        Int      @default(1)
@@ -93,6 +193,7 @@ model AgentConfig {
   // Metadata
   description    String?
   createdBy      String?  @map("created_by")
+  apiKey         String?  @unique @map("api_key")
   
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
@@ -108,10 +209,33 @@ model User {
   name      String
   role      String   @default("reviewer")
   avatarUrl String?  @map("avatar_url")
+  orcidId   String?  @map("orcid_id")
+  affiliation String?
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   reviews   Review[]
 
   @@map("users")
+}
+
+// Conference model for tier management
+model Conference {
+  id          String    @id @default(uuid())
+  name        String
+  acronym     String?
+  tier        PaperTier @default(STANDARD)
+  
+  // Skill requirements for this conference
+  requiredSkills String[] @default([]) @map("required_skills")
+  
+  // Metadata
+  publisher   String?
+  website     String?
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([tier])
+  @@map("conferences")
 }
