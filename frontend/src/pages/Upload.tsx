@@ -139,27 +139,14 @@ export function Upload() {
         });
       }, 300);
 
-      // Upload to API with conference info
-      const formData = new FormData();
-      formData.append('pdf', file);
-      formData.append('title', title);
-      formData.append('authors', JSON.stringify(selectedAuthors.length > 0 ? selectedAuthors : ['Anonymous']));
-      formData.append('abstract', abstract);
-      formData.append('keywords', JSON.stringify(keywords.split(',').map(k => k.trim()).filter(Boolean)));
-      formData.append('field', 'Computer Science');
-      if (conferenceUrl) {
-        formData.append('conferenceUrl', conferenceUrl);
-      }
-
       // Use the API client for upload
       const result = await papersApi.upload(file, {
         title,
-        authors: authors.split(',').map(a => a.trim()),
+        authors: selectedAuthors.length > 0 ? selectedAuthors : ['Anonymous'],
         abstract,
-        keywords: keywords.split(',').map(k => k.trim()),
-        field,
-        doi: doi || undefined,
-        conferenceId: conferenceId || undefined,
+        keywords: keywords.split(',').map(k => k.trim()).filter(Boolean),
+        field: 'Computer Science',
+        conferenceId: selectedConferenceId || undefined,
         conferenceUrl: conferenceUrl || undefined,
       });
 
