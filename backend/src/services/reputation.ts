@@ -4,12 +4,14 @@
  * Manages agent reputation, tier progression, and access control
  */
 
-import { AgentTier, PrismaClient } from '@prisma/client';
+import pkg from '@prisma/client';
+import type { AgentTier as AgentTierType } from '@prisma/client';
+const { AgentTier, PrismaClient } = pkg;
 
 const prisma = new PrismaClient();
 
 // Tier requirements
-export const TIER_REQUIREMENTS: Record<AgentTier, {
+export const TIER_REQUIREMENTS: Record<AgentTierType, {
   minReviews: number;
   minAccuracy: number;
   minHelpfulness: number;
@@ -42,7 +44,7 @@ export const TIER_REQUIREMENTS: Record<AgentTier, {
 };
 
 // Weekly review limits by tier
-export const TIER_LIMITS: Record<AgentTier, number> = {
+export const TIER_LIMITS: Record<AgentTierType, number> = {
   [AgentTier.ENTRY]: 5,
   [AgentTier.STANDARD]: 15,
   [AgentTier.PREMIUM]: 30,
@@ -88,14 +90,14 @@ export function calculateOverallReputation(metrics: {
  * Check if agent meets tier requirements
  */
 export function checkTierEligibility(
-  currentTier: AgentTier,
+  currentTier: AgentTierType,
   reputation: {
     reviewCount: number;
     accuracyScore: number;
     helpfulnessScore: number;
     overallReputation: number;
   }
-): { eligible: boolean; nextTier: AgentTier | null; missing: string[] } {
+): { eligible: boolean; nextTier: AgentTierType | null; missing: string[] } {
   const tiers = [AgentTier.ENTRY, AgentTier.STANDARD, AgentTier.PREMIUM, AgentTier.ELITE];
   const currentIndex = tiers.indexOf(currentTier);
   const nextTier = tiers[currentIndex + 1] || null;
@@ -195,8 +197,8 @@ export async function updateReputation(
  * Check if agent can access paper tier
  */
 export function canAccessTier(
-  agentTier: AgentTier,
-  paperTier: AgentTier
+  agentTier: AgentTierType,
+  paperTier: AgentTierType
 ): boolean {
   const tiers = [AgentTier.ENTRY, AgentTier.STANDARD, AgentTier.PREMIUM, AgentTier.ELITE];
   const agentIndex = tiers.indexOf(agentTier);
@@ -210,7 +212,7 @@ export function canAccessTier(
  */
 export function checkRateLimit(
   reviewsThisWeek: number,
-  tier: AgentTier
+  tier: AgentTierType
 ): { allowed: boolean; remaining: number; resetsAt: Date } {
   const limit = TIER_LIMITS[tier];
   const remaining = limit - reviewsThisWeek;
@@ -232,7 +234,7 @@ export function checkRateLimit(
  * Get tier progress for agent
  */
 export function getTierProgress(
-  currentTier: AgentTier,
+  currentTier: AgentTierType,
   reputation: {
     reviewCount: number;
     accuracyScore: number;
@@ -240,8 +242,8 @@ export function getTierProgress(
     overallReputation: number;
   }
 ): {
-  current: AgentTier;
-  next: AgentTier | null;
+  current: AgentTierType;
+  next: AgentTierType | null;
   progress: number; // 0-100
   requirements: Array<{
     name: string;

@@ -14,13 +14,15 @@
  *   - nousresearch/hermes-3-llama-3.1-405b (large, slower)
  */
 
-import { PrismaClient, Paper, AgentConfig, ReviewAttitude } from '@prisma/client';
+import pkg from '@prisma/client';
+const { PrismaClient, ReviewAttitude } = pkg;
+import type { Paper, AgentConfig, ReviewAttitude as ReviewAttitudeType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 interface ReviewResult {
   text: string;
-  attitude: ReviewAttitude;
+  attitude: ReviewAttitudeType;
 }
 
 interface LLMConfig {
@@ -154,7 +156,7 @@ Be critical but fair. Ground all claims in the provided abstract. Be concise.`
     
     // Parse attitude from JSON block
     const attitudeMatch = content.match(/\{[^}]*"attitude"\s*:\s*"(POSITIVE|NEUTRAL|NEGATIVE)"[^}]*\}/i);
-    const attitude = (attitudeMatch?.[1]?.toUpperCase() as ReviewAttitude) || 'NEUTRAL';
+    const attitude = (attitudeMatch?.[1]?.toUpperCase() as ReviewAttitudeType) || 'NEUTRAL';
     
     // Clean up the text (remove JSON block)
     const text = content.replace(/\{[^}]*"attitude"[^}]*\}/gi, '').trim();
@@ -198,7 +200,7 @@ function generateMockReview(
   paper: Paper,
   agent: AgentConfig & { skills: Array<{ name: string; level: string }> }
 ): ReviewResult {
-  const attitudes: ReviewAttitude[] = ['POSITIVE', 'NEUTRAL', 'NEGATIVE'];
+  const attitudes: ReviewAttitudeType[] = ['POSITIVE', 'NEUTRAL', 'NEGATIVE'];
   const attitude = attitudes[Math.floor(Math.random() * attitudes.length)];
   
   const reviews = {
@@ -243,7 +245,7 @@ Major revision or rejection recommended.`
   };
   
   return {
-    text: reviews[attitude],
+    text: reviews[attitude as keyof typeof reviews],
     attitude
   };
 }

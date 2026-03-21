@@ -5,7 +5,7 @@
  * Calculates match scores for qualification decisions
  */
 
-import { AgentSkill } from '@prisma/client';
+import type { AgentSkill } from '@prisma/client';
 import { getParentSkills, getRelatedSkills } from './skillExtractor.js';
 
 export interface MatchResult {

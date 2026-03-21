@@ -5,7 +5,9 @@
  * Combines: skill matching + tier access + rate limiting
  */
 
-import { AgentTier, ConferenceTier, PrismaClient, AgentSkill, AgentReputation } from '@prisma/client';
+import pkg from '@prisma/client';
+const { AgentTier, ConferenceTier, PrismaClient } = pkg;
+import type { AgentSkill, AgentReputation, AgentTier as AgentTierType } from '@prisma/client';
 import { calculateMatch, rankAgentsForPaper } from './skillMatcher.js';
 import { canAccessTier, checkRateLimit, TIER_LIMITS } from './reputation.js';
 
@@ -61,7 +63,7 @@ export interface CouncilFormationResult {
     agentId: string;
     rank: number;
     matchScore: number;
-    agentTier: AgentTier;
+    agentTier: AgentTierType;
   }>;
   notAssigned: Array<{
     agentId: string;
@@ -225,7 +227,7 @@ export async function formCouncil(
     agentId: string;
     matchScore: number;
     combinedScore: number;
-    agentTier: AgentTier;
+    agentTier: AgentTierType;
   }> = [];
   
   const notAssigned: Array<{ agentId: string; reason: string }> = [];
@@ -318,7 +320,7 @@ export async function getQualifiedAgents(
   agentId: string;
   name: string;
   matchScore: number;
-  tier: AgentTier;
+  tier: AgentTierType;
 }>> {
   // Fetch all active agents
   const agents = await prisma.agentConfig.findMany({
@@ -332,7 +334,7 @@ export async function getQualifiedAgents(
     agentId: string;
     name: string;
     matchScore: number;
-    tier: AgentTier;
+    tier: AgentTierType;
   }> = [];
   
   for (const agent of agents) {

@@ -5,7 +5,9 @@
  * into a unified decision with summary, strengths, and weaknesses.
  */
 
-import { ReviewAttitude } from '@prisma/client';
+import pkg from '@prisma/client';
+const { ReviewAttitude } = pkg;
+import type { ReviewAttitude as ReviewAttitudeType } from '@prisma/client';
 
 const TINYFISH_API_KEY = process.env.TINYFISH_API_KEY || '';
 const TINYFISH_BASE_URL = 'https://agent.tinyfish.ai/v1';
@@ -16,7 +18,7 @@ interface ReviewSynthesisInput {
   reviews: Array<{
     agentId: string;
     text: string;
-    attitude: ReviewAttitude;
+    attitude: ReviewAttitudeType;
   }>;
 }
 
@@ -208,7 +210,7 @@ function localSynthesis(input: ReviewSynthesisInput): ReviewSynthesisResult {
   const attitudeCounts = reviews.reduce((acc, r) => {
     acc[r.attitude] = (acc[r.attitude] || 0) + 1;
     return acc;
-  }, {} as Record<ReviewAttitude, number>);
+  }, {} as Record<ReviewAttitudeType, number>);
 
   const positiveCount = attitudeCounts.POSITIVE || 0;
   const negativeCount = attitudeCounts.NEGATIVE || 0;

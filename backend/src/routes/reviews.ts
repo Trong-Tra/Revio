@@ -4,7 +4,8 @@ const router: Router = Router();
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
-import { ReviewAttitude } from '@prisma/client';
+import pkg from '@prisma/client';
+const { ReviewAttitude } = pkg;
 
 
 
