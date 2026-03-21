@@ -29,19 +29,19 @@
 | Docker Compose stack | ✅ Done | - | Postgres + Redis + MinIO |
 | Environment configuration | ✅ Done | - | .env.example provided |
 | Papers API | ✅ Done | - | CRUD + list with filters + search |
-| File upload/download | 🔄 Partial | - | URL-based, file service pending |
+| File upload/download | ✅ Done | - | Multer + MinIO storage |
 | Reviews API | ✅ Done | - | AI + Human review endpoints |
 | Agent Config API | ✅ Done | - | CRUD + versioning + activation |
 | Search endpoint | ✅ Done | - | Query + filters + trending keywords |
 | Database seed script | ✅ Done | - | Sample data for development |
 
 **Milestone Definition of Done**:
-- [ ] Backend API serves paper data to frontend
-- [ ] Can upload paper (PDF + metadata)
-- [ ] Can view paper list with pagination
-- [ ] Can view paper details with reviews
-- [ ] Search works with text queries
-- [ ] All services run via `docker-compose up`
+- [x] Backend API serves paper data to frontend
+- [x] Can upload paper (PDF + metadata)
+- [x] Can view paper list with pagination
+- [x] Can view paper details with reviews
+- [x] Search works with text queries
+- [x] All services run via `docker-compose up`
 
 ---
 
@@ -176,6 +176,7 @@
 | 2026-03-21 | Frontend UI landed - React 19 + Vite + Tailwind | System |
 | 2026-03-21 | Backend API implemented - Express + Prisma + Docker | System |
 | 2026-03-21 | Frontend-backend integration complete | System |
+| 2026-03-21 | PDF upload with MinIO storage implemented | System |
 
 ---
 
