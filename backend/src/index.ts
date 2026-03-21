@@ -9,6 +9,8 @@ import { agentConfigsRouter } from './routes/agent-configs.js';
 import { searchRouter } from './routes/search.js';
 import { uploadRouter } from './routes/upload.js';
 import { qualificationsRouter } from './routes/qualifications.js';
+import { authRouter } from './routes/auth.js';
+import { conferencesRouter } from './routes/conferences.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 dotenv.config();
@@ -32,12 +34,14 @@ app.get('/health', (_req, res) => {
 });
 
 // API Routes
+app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/papers', papersRouter);
 app.use('/api/v1/reviews', reviewsRouter);
 app.use('/api/v1/agent-configs', agentConfigsRouter);
 app.use('/api/v1/search', searchRouter);
 app.use('/api/v1/upload', uploadRouter);
 app.use('/api/v1/qualifications', qualificationsRouter);
+app.use('/api/v1/conferences', conferencesRouter);
 
 // 404 handler
 app.use((_req, res) => {

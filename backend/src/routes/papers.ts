@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
-import type { PaperFilters } from '../types/index.js';
 
 const router = Router();
 
@@ -14,7 +13,36 @@ const createPaperSchema = z.object({
   keywords: z.array(z.string()).default([]),
   field: z.string().min(1),
   doi: z.string().optional(),
+  conferenceId: z.string().optional(),
 });
+
+// Helper to transform paper for UI
+function transformPaper(paper: any) {
+  const reviews = paper.reviews || [];
+  const aiReviews = reviews.filter((r: any) => r.reviewerType === 'AI');
+  const avgScore = aiReviews.length > 0
+    ? aiReviews.reduce((sum: number, r: any) => sum + (r.overallScore || 0), 0) / aiReviews.length
+    : 0;
+  
+  const decisions = reviews.map((r: any) => r.decision).filter(Boolean);
+  const decision = decisions.length > 0 ? decisions[0] : 'PENDING';
+  
+  return {
+    ...paper,
+    date: paper.createdAt.toISOString(),
+    description: paper.abstract,
+    tag1: paper.keywords?.[0],
+    tag2: paper.keywords?.[1],
+    rating: avgScore,
+    score: avgScore,
+    decision: decision?.toString().replace(/_/g, ' ') || 'PENDING',
+    status: paper.status,
+    conferenceName: paper.metadata?.venue || 'Unknown Conference',
+    reviewCount: reviews.length,
+    confidence: paper.skillConfidence ? `${Math.round(paper.skillConfidence * 100)}%` : null,
+    aiScore: avgScore / 10,
+  };
+}
 
 // List papers with filters
 router.get('/', asyncHandler(async (req, res) => {
@@ -31,7 +59,6 @@ router.get('/', asyncHandler(async (req, res) => {
   const perPageNum = Math.min(100, Math.max(1, parseInt(perPage as string, 10)));
   const skip = (pageNum - 1) * perPageNum;
 
-  // Build where clause
   const where: any = {};
   
   if (field) {
@@ -46,14 +73,8 @@ router.get('/', asyncHandler(async (req, res) => {
     ];
   }
 
-  // Build order by
   const orderBy: any = {};
-  if (sortBy === 'relevance' && search) {
-    // For relevance, we'll use a simple approach - can be enhanced with full-text search
-    orderBy.createdAt = 'desc';
-  } else {
-    orderBy[sortBy as string] = sortOrder;
-  }
+  orderBy[sortBy as string] = sortOrder;
 
   const [papers, total] = await Promise.all([
     prisma.paper.findMany({
@@ -62,8 +83,12 @@ router.get('/', asyncHandler(async (req, res) => {
       skip,
       take: perPageNum,
       include: {
-        _count: {
-          select: { reviews: true }
+        reviews: {
+          include: {
+            reviewer: {
+              select: { id: true, name: true, avatarUrl: true }
+            }
+          }
         }
       }
     }),
@@ -72,10 +97,7 @@ router.get('/', asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: papers.map(p => ({
-      ...p,
-      reviewCount: p._count.reviews
-    })),
+    data: papers.map(transformPaper),
     meta: {
       page: pageNum,
       perPage: perPageNum,
@@ -111,15 +133,14 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: paper
+    data: transformPaper(paper)
   });
 }));
 
-// Create paper (metadata only - PDF uploaded separately)
+// Create paper
 router.post('/', asyncHandler(async (req, res) => {
   const validated = createPaperSchema.parse(req.body);
   
-  // For now, pdfUrl and pdfKey are placeholders - will be updated after file upload
   const paper = await prisma.paper.create({
     data: {
       ...validated,
@@ -161,7 +182,7 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   });
 }));
 
-// Download PDF (returns signed URL or streams file)
+// Download PDF
 router.get('/:id/pdf', asyncHandler(async (req, res) => {
   const { id } = req.params;
   
@@ -176,8 +197,6 @@ router.get('/:id/pdf', asyncHandler(async (req, res) => {
     throw error;
   }
 
-  // For now, redirect to the URL
-  // In production, this would generate a signed URL or stream from S3/MinIO
   res.redirect(paper.pdfUrl);
 }));
 

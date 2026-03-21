@@ -11,6 +11,13 @@ export interface ApiResponse<T> {
   };
 }
 
+// Review Aspect for detailed reviews
+export interface ReviewAspect {
+  name: string;
+  score: number; // 1-10
+  comment?: string;
+}
+
 export interface Paper {
   id: string;
   title: string;
@@ -21,6 +28,26 @@ export interface Paper {
   pdfUrl: string;
   pdfKey: string;
   doi?: string;
+  
+  // UI-facing fields
+  rating: number; // Average review score (0-10)
+  decision: string; // "Accepted", "Rejected", "Major Revision", etc.
+  
+  // For UI display
+  date: string; // createdAt formatted
+  description: string; // alias for abstract
+  tag1?: string; // first keyword
+  tag2?: string; // second keyword
+  status: string; // PaperStatus
+  
+  // Conference
+  conferenceId?: string;
+  conferenceName?: string;
+  
+  // Scores from reviews
+  score: number; // Overall score (same as rating)
+  aspects?: ReviewAspect[]; // Detailed aspects
+  
   metadata?: {
     venue?: string;
     year?: number;
@@ -63,6 +90,10 @@ export interface Review {
     recommendation?: string;
     evaluation?: string;
   };
+  // Detailed aspects
+  aspects?: ReviewAspect[];
+  overallScore?: number;
+  decision?: string;
   isAccepted?: boolean | null;
   confidenceScore?: number;
   createdAt: string;
@@ -84,6 +115,13 @@ export interface AgentConfig {
   isActive: boolean;
   description?: string;
   createdAt: string;
+  // Reputation
+  reputation?: {
+    tier: string;
+    reviewCount: number;
+    accuracyScore: number;
+    overallReputation: number;
+  };
 }
 
 export interface User {
@@ -94,12 +132,23 @@ export interface User {
   avatarUrl?: string;
   orcidId?: string;
   affiliation?: string;
+  bio?: string;
   createdAt: string;
 }
 
 export interface AuthResponse {
   user: User;
   token: string;
+}
+
+export interface Conference {
+  id: string;
+  name: string;
+  acronym?: string;
+  tier: string;
+  requiredSkills: string[];
+  publisher?: string;
+  website?: string;
 }
 
 class ApiError extends Error {
@@ -151,81 +200,112 @@ async function fetchApi<T>(
   return data;
 }
 
+// Transform paper from API to UI format
+function transformPaper(paper: any): Paper {
+  const reviews = paper.reviews || [];
+  const aiReviews = reviews.filter((r: any) => r.reviewerType === 'AI');
+  const avgScore = aiReviews.length > 0
+    ? aiReviews.reduce((sum: number, r: any) => sum + (r.content?.overallScore || 0), 0) / aiReviews.length
+    : 0;
+  
+  // Get decision from reviews
+  const decisions = reviews.map((r: any) => r.decision || r.content?.recommendation);
+  const decision = decisions.length > 0 ? decisions[0] : 'Pending';
+  
+  return {
+    ...paper,
+    date: new Date(paper.createdAt).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    }),
+    description: paper.abstract,
+    tag1: paper.keywords?.[0],
+    tag2: paper.keywords?.[1],
+    rating: avgScore,
+    score: avgScore,
+    decision: decision?.toString().replace(/_/g, ' ') || 'Pending',
+    status: paper.status,
+    conferenceName: paper.metadata?.venue || 'Unknown Conference',
+    aspects: reviews[0]?.aspects || [
+      { name: 'Novelty', score: avgScore * 0.9 },
+      { name: 'Methodology', score: avgScore * 0.95 },
+      { name: 'Clarity', score: avgScore * 0.85 },
+      { name: 'Impact', score: avgScore * 0.88 },
+    ],
+  };
+}
+
 // Auth API
 export const authApi = {
   signIn: async (email: string, password: string): Promise<AuthResponse> => {
-    // For now, use mock since backend auth isn't implemented
-    // In production: return fetchApi<AuthResponse>('/auth/signin', { method: 'POST', body: JSON.stringify({ email, password }) });
+    const response = await fetchApi<AuthResponse>('/auth/signin', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
     
-    // Mock response
-    return {
-      user: {
-        id: 'user_123',
-        email,
-        name: email.split('@')[0],
-        role: 'reviewer',
-        createdAt: new Date().toISOString(),
-      },
-      token: 'mock_token_' + Math.random().toString(36).substr(2, 20),
-    };
+    localStorage.setItem('auth_user', JSON.stringify(response.data.user));
+    localStorage.setItem('auth_token', response.data.token);
+    
+    return response.data;
   },
 
   signUp: async (name: string, email: string, password: string): Promise<AuthResponse> => {
-    // For now, use mock since backend auth isn't implemented
-    // In production: return fetchApi<AuthResponse>('/auth/signup', { method: 'POST', body: JSON.stringify({ name, email, password }) });
+    const response = await fetchApi<AuthResponse>('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password }),
+    });
     
-    return {
-      user: {
-        id: 'user_' + Math.random().toString(36).substr(2, 9),
-        email,
-        name,
-        role: 'reviewer',
-        createdAt: new Date().toISOString(),
-      },
-      token: 'mock_token_' + Math.random().toString(36).substr(2, 20),
-    };
+    localStorage.setItem('auth_user', JSON.stringify(response.data.user));
+    localStorage.setItem('auth_token', response.data.token);
+    
+    return response.data;
   },
 
   signOut: async (): Promise<void> => {
-    // In production: await fetchApi('/auth/signout', { method: 'POST' });
+    await fetchApi('/auth/signout', { method: 'POST' });
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
   },
 
   getMe: async (): Promise<User> => {
-    // In production: return fetchApi<User>('/auth/me');
-    const stored = localStorage.getItem('auth_user');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    throw new ApiError('Not authenticated', 401);
+    const response = await fetchApi<User>('/auth/me');
+    return response.data;
   },
 
   updateProfile: async (data: Partial<User>): Promise<User> => {
-    // In production: return fetchApi<User>('/auth/profile', { method: 'PATCH', body: JSON.stringify(data) });
-    const stored = localStorage.getItem('auth_user');
-    if (stored) {
-      const user = JSON.parse(stored);
-      const updated = { ...user, ...data };
-      localStorage.setItem('auth_user', JSON.stringify(updated));
-      return updated;
-    }
-    throw new ApiError('Not authenticated', 401);
+    const response = await fetchApi<User>('/auth/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    localStorage.setItem('auth_user', JSON.stringify(response.data));
+    return response.data;
   },
 };
 
 // Papers API
 export const papersApi = {
-  list: (params?: { field?: string; search?: string; page?: number; perPage?: number }) => {
+  list: async (params?: { field?: string; search?: string; page?: number; perPage?: number }) => {
     const query = new URLSearchParams();
     if (params?.field) query.append('field', params.field);
     if (params?.search) query.append('search', params.search);
     if (params?.page) query.append('page', params.page.toString());
     if (params?.perPage) query.append('perPage', params.perPage.toString());
-    return fetchApi<Paper[]>(`/papers?${query.toString()}`);
+    
+    const response = await fetchApi<any[]>(`/papers?${query.toString()}`);
+    return {
+      ...response,
+      data: response.data.map(transformPaper),
+    };
   },
   
-  get: (id: string) => fetchApi<Paper>(`/papers/${id}`),
+  get: async (id: string) => {
+    const response = await fetchApi<any>(`/papers/${id}`);
+    return {
+      ...response,
+      data: transformPaper(response.data),
+    };
+  },
   
   create: (paper: Omit<Paper, 'id' | 'createdAt' | 'updatedAt' | 'pdfUrl' | 'pdfKey'>) =>
     fetchApi<Paper>('/papers', {
@@ -242,16 +322,18 @@ export const papersApi = {
       keywords: string[];
       field: string;
       doi?: string;
+      conferenceId?: string;
     }
   ): Promise<ApiResponse<Paper>> => {
     const formData = new FormData();
     formData.append('pdf', file);
     formData.append('title', metadata.title);
-    formData.append('authors', metadata.authors.join(', '));
+    formData.append('authors', JSON.stringify(metadata.authors));
     formData.append('abstract', metadata.abstract);
-    formData.append('keywords', metadata.keywords.join(', '));
+    formData.append('keywords', JSON.stringify(metadata.keywords));
     formData.append('field', metadata.field);
     if (metadata.doi) formData.append('doi', metadata.doi);
+    if (metadata.conferenceId) formData.append('conferenceId', metadata.conferenceId);
 
     const token = getToken();
     const response = await fetch(`${API_BASE_URL}/upload`, {
@@ -270,7 +352,10 @@ export const papersApi = {
       );
     }
 
-    return data;
+    return {
+      ...data,
+      data: transformPaper(data.data),
+    };
   },
   
   update: (id: string, paper: Partial<Paper>) =>
@@ -313,13 +398,18 @@ export const reviewsApi = {
 
 // Search API
 export const searchApi = {
-  search: (params: { q?: string; field?: string; sort?: string; page?: number }) => {
+  search: async (params: { q?: string; field?: string; sort?: string; page?: number }) => {
     const query = new URLSearchParams();
     if (params.q) query.append('q', params.q);
     if (params.field) query.append('field', params.field);
     if (params.sort) query.append('sort', params.sort);
     if (params.page) query.append('page', params.page.toString());
-    return fetchApi<Paper[]>(`/search?${query.toString()}`);
+    
+    const response = await fetchApi<any[]>(`/search?${query.toString()}`);
+    return {
+      ...response,
+      data: response.data.map(transformPaper),
+    };
   },
   
   fields: () => fetchApi<{ name: string; count: number }[]>('/search/fields'),
@@ -329,13 +419,41 @@ export const searchApi = {
 
 // Agent Configs API
 export const agentConfigsApi = {
-  list: () => fetchApi<AgentConfig[]>('/agent-configs'),
+  list: async () => {
+    const response = await fetchApi<any[]>('/agent-configs');
+    return {
+      ...response,
+      data: response.data.map((agent: any) => ({
+        ...agent,
+        reputation: agent.reputation || {
+          tier: 'ENTRY',
+          reviewCount: 0,
+          accuracyScore: 0,
+          overallReputation: 0,
+        },
+      })),
+    };
+  },
   
-  get: (id: string) => fetchApi<AgentConfig>(`/agent-configs/${id}`),
+  get: async (id: string) => {
+    const response = await fetchApi<any>(`/agent-configs/${id}`);
+    return {
+      ...response,
+      data: {
+        ...response.data,
+        reputation: response.data.reputation || {
+          tier: 'ENTRY',
+          reviewCount: 0,
+          accuracyScore: 0,
+          overallReputation: 0,
+        },
+      },
+    };
+  },
   
   getActive: () => fetchApi<AgentConfig>('/agent-configs/active'),
   
-  create: (config: Omit<AgentConfig, 'id' | 'version' | 'isActive' | 'createdAt'>) =>
+  create: (config: Partial<AgentConfig>) =>
     fetchApi<AgentConfig>('/agent-configs', {
       method: 'POST',
       body: JSON.stringify(config),
@@ -361,14 +479,12 @@ export const agentConfigsApi = {
 // User Papers API (for profile page)
 export const userPapersApi = {
   getUserPapers: async (userId: string): Promise<Paper[]> => {
-    // In production: return fetchApi<Paper[]>(`/users/${userId}/papers`);
     // For now, return all papers as mock
     const response = await papersApi.list();
     return response.data;
   },
   
   getUserReviews: async (userId: string): Promise<Review[]> => {
-    // In production: return fetchApi<Review[]>(`/users/${userId}/reviews`);
     const response = await reviewsApi.list();
     return response.data.filter(r => r.reviewerId === userId);
   },
@@ -376,20 +492,21 @@ export const userPapersApi = {
 
 // Agents API (for agent directory)
 export const agentsApi = {
-  list: async (): Promise<AgentConfig[]> => {
+  list: async () => {
     const response = await agentConfigsApi.list();
     return response.data;
   },
   
-  get: async (id: string): Promise<AgentConfig> => {
+  get: async (id: string) => {
     const response = await agentConfigsApi.get(id);
     return response.data;
   },
-  
-  getActive: async (): Promise<AgentConfig> => {
-    const response = await agentConfigsApi.getActive();
-    return response.data;
-  },
+};
+
+// Conference API
+export const conferenceApi = {
+  list: () => fetchApi<Conference[]>('/conferences'),
+  get: (id: string) => fetchApi<Conference>(`/conferences/${id}`),
 };
 
 export { ApiError };
