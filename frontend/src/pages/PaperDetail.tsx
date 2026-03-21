@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Download, ExternalLink, Bot, Users, FileText, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, Bot, Users, FileText, Loader2, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
@@ -113,40 +113,48 @@ export function PaperDetail() {
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: animationTiming.duration.slow, delay: 0.3, ease: premiumEase }}
           >
-            {/* Meta-Score Card */}
+            {/* Result Card */}
             <Card className="border border-outline-variant/30 bg-gradient-to-br from-surface-container-lowest to-surface-container-low">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Bot className="w-5 h-5 text-on-surface-variant" />
-                  Meta-Score
+                  Result
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-5xl font-label font-bold text-primary">
-                    {paper.rating?.toFixed(1) || "0.0"}
-                  </span>
-                  <span className="text-xl text-on-surface-variant font-label">/10</span>
-                </div>
-                <div className="w-full bg-surface-container-highest rounded-full h-2.5">
-                  <div 
-                    className="bg-gradient-to-r from-secondary to-primary h-2.5 rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: `${((paper.rating || 0) / 10) * 100}%` }}
-                  ></div>
-                </div>
-                <p className="text-sm text-on-surface-variant">
-                  Aggregated from {paper.reviews?.length || 0} verified reviews
-                </p>
-                <div className="pt-4 border-t border-outline-variant/30">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Decision</span>
-                    <Badge variant={paper.decision === 'ACCEPT' ? 'provenance' : 'outline'}>
-                      {paper.decision}
-                    </Badge>
+              <CardContent>
+                <motion.div
+                  className="rounded-lg border border-outline-variant/40 bg-surface-container-low p-4"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true, amount: 0.5 }}
+                  transition={{ duration: animationTiming.duration.base, ease: premiumEase }}
+                >
+                  <div className="max-h-56 overflow-y-auto scrollbar-hide pr-1">
+                    <p className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-line">
+                      {`The paper demonstrates strong methodological consistency and clear relevance to the conference theme.
+
+Core findings are validated with high confidence, and the proposed approach appears reproducible from the provided details. The remaining concern is breadth of validation under harder edge-case settings, which should be expanded in a revision cycle.`}
+                    </p>
                   </div>
+                </motion.div>
+                <div className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-3 flex items-center justify-between mt-2">
+                  <span className="text-sm text-on-surface-variant">Decision</span>
+                  <span className={`text-sm font-semibold ${paper.decision === "Accepted" ? "text-primary" : "text-amber-700"}`}>
+                    {paper.decision || "Pending"}
+                  </span>
+                </div>
+                <div className="mt-0.5 h-0.5 w-full rounded-full bg-surface-container-high overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${paper.decision === "Accepted" ? "bg-primary" : "bg-amber-600"}`}
+                    style={{ width: "100%" }}
+                  />
                 </div>
               </CardContent>
             </Card>
+            <div className="-mt-0.5 flex items-center justify-center gap-2 text-xs text-on-surface-variant padding-top-0">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span>Powered by TinyFish.ai</span>
+            </div>
           </motion.div>
         )}
       </div>
@@ -171,7 +179,9 @@ export function PaperDetail() {
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {paper.keywords.map((tag: string) => (
-                  <Badge key={tag} variant="outline">{tag}</Badge>
+                  <span key={tag}>
+                    <Badge variant="outline">{tag}</Badge>
+                  </span>
                 ))}
               </div>
             </CardContent>
@@ -196,7 +206,7 @@ export function PaperDetail() {
                   >
                     <div className="flex items-center justify-between mb-2 gap-3">
                       <span className="font-medium text-sm">Reviewer {review.agentId.slice(0, 8)}...</span>
-                      <Badge variant={review.attitude === 'POSITIVE' ? 'provenance' : review.attitude === 'NEGATIVE' ? 'destructive' : 'secondary'}>
+                      <Badge variant={review.attitude === 'POSITIVE' ? 'provenance' : review.attitude === 'NEGATIVE' ? 'outline' : 'secondary'}>
                         {review.attitude}
                       </Badge>
                     </div>
@@ -254,7 +264,7 @@ export function PaperDetail() {
                     <p className="text-sm font-medium text-on-surface">Reviewer {selectedReview.agentId.slice(0, 8)}...</p>
                     <p className="text-xs text-on-surface-variant">Attitude: {selectedReview.attitude}</p>
                   </div>
-                  <Badge variant={selectedReview.attitude === 'POSITIVE' ? 'provenance' : selectedReview.attitude === 'NEGATIVE' ? 'destructive' : 'secondary'}>
+                  <Badge variant={selectedReview.attitude === 'POSITIVE' ? 'provenance' : selectedReview.attitude === 'NEGATIVE' ? 'outline' : 'secondary'}>
                     {selectedReview.attitude}
                   </Badge>
                 </div>

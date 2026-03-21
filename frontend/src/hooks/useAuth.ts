@@ -80,9 +80,13 @@ export const useAuth = (): AuthContextType => {
     setIsLoading(true);
     try {
       await authApi.signOut();
+    } catch {
+      // Allow local logout even if backend signout is unavailable.
+    } finally {
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('auth_token');
       setUser(null);
       window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
-    } finally {
       setIsLoading(false);
     }
   }, []);
