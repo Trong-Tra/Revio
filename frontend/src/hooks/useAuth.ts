@@ -11,6 +11,7 @@ interface AuthContextType {
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
+  setUser: (user: User | null) => void;
 }
 
 // Initialize from localStorage or null
@@ -113,5 +114,6 @@ export const useAuth = (): AuthContextType => {
     signUp,
     signOut,
     updateProfile,
+    setUser,
   };
 };

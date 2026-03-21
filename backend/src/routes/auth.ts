@@ -31,7 +31,6 @@ const signUpSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   affiliation: z.string().optional(),
-  orcidId: z.string().optional(),
 });
 
 const signInSchema = z.object({
@@ -41,7 +40,7 @@ const signInSchema = z.object({
 
 // Sign up
 router.post('/signup', asyncHandler(async (req, res) => {
-  const { name, email, password, affiliation, orcidId } = signUpSchema.parse(req.body);
+  const { name, email, password, affiliation } = signUpSchema.parse(req.body);
   
   // Check if user exists
   const existing = await prisma.user.findUnique({
@@ -54,8 +53,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
     throw error;
   }
   
-  // Create user
-  const user = await prisma.user.create({
+  // Create user with empty defaults
     data: {
       name,
       email,
@@ -75,7 +73,8 @@ router.post('/signup', asyncHandler(async (req, res) => {
         name: user.name,
         email: user.email,
         affiliation: user.affiliation,
-        orcidId: user.orcidId,
+        bio: user.bio,
+        location: user.location,
         role: user.role,
       },
       token
@@ -107,7 +106,8 @@ router.post('/signin', asyncHandler(async (req, res) => {
         name: user.name,
         email: user.email,
         affiliation: user.affiliation,
-        orcidId: user.orcidId,
+        bio: user.bio,
+        location: user.location,
         role: user.role,
       },
       token
@@ -157,7 +157,8 @@ router.get('/me', asyncHandler(async (req, res) => {
       name: true,
       email: true,
       affiliation: true,
-      orcidId: true,
+      bio: true,
+      location: true,
       role: true,
       avatarUrl: true,
     }
@@ -188,7 +189,7 @@ router.patch('/profile', asyncHandler(async (req, res) => {
   const parts = token.split('.');
   const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
   
-  const allowedUpdates = ['name', 'affiliation', 'orcidId', 'bio'];
+  const allowedUpdates = ['name', 'affiliation', 'bio', 'location'];
   const updates: any = {};
   
   for (const key of allowedUpdates) {

@@ -130,9 +130,9 @@ export interface User {
   name: string;
   role: string;
   avatarUrl?: string;
-  orcidId?: string;
   affiliation?: string;
   bio?: string;
+  location?: string;
   createdAt: string;
 }
 
