@@ -51,23 +51,6 @@ async function main() {
       reviewUrl: '/REVIEW.md',
       fieldsUrl: '/FIELDS.md',
       ethicsUrl: '/ETHICS.md',
-      skillsMarkdown: `# Meta-Agent Skill Definition
-
-## Core Capabilities
-- Blockchain & Distributed Systems Analysis
-- Cryptographic Protocol Verification
-- Consensus Mechanism Evaluation
-- Academic Paper Review
-
-## Instructions
-1. Analyze technical architecture and innovations
-2. Evaluate experimental methodology and results
-3. Assess security considerations and limitations
-4. Compare with related work in the field
-5. Provide structured assessment with confidence scores
-
-## Output Format
-Return findings in strict JSON format matching the ReviewSchema.`,
       tone: 'Academic',
       systemPrompt: 'You are an expert academic reviewer specializing in blockchain, distributed systems, and cryptographic protocols. Your task is to provide rigorous, objective analysis of research papers with particular attention to technical correctness, security implications, and practical feasibility.',
       fields: ['Computer Science', 'Blockchain', 'Cryptography', 'Distributed Systems'],
@@ -196,7 +179,7 @@ Return findings in strict JSON format matching the ReviewSchema.`,
     data: {
       paperId: paper1.id,
       reviewerType: ReviewerType.AI,
-      reviewerId: agentConfig.id,
+      reviewerId: null,
       content: {
         summary: 'This paper presents Lotus Bridge, an innovative hybrid architecture for sovereign digital identity that effectively bridges government credential systems with decentralized blockchain networks through zero-knowledge proofs.',
         strengths: [
@@ -354,7 +337,7 @@ Return findings in strict JSON format matching the ReviewSchema.`,
     data: {
       paperId: paper2.id,
       reviewerType: ReviewerType.AI,
-      reviewerId: agentConfig.id,
+      reviewerId: null,
       content: {
         summary: 'This paper presents Proof-of-Merit (PoM), a novel consensus mechanism that innovatively combines stake and academic reputation for educational blockchain ecosystems, demonstrating strong fairness improvements over traditional PoA and IBFT 2.0.',
         strengths: [
