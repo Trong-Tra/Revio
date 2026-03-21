@@ -6,24 +6,41 @@
 
 ## 📅 Project Timeline
 
-### Phase 1: Foundation (Week 1-2) 🔨 CURRENT
-**Goal**: Core infrastructure and database setup
+### Phase 0: Frontend Foundation ✅ COMPLETE
+**Goal**: Frontend UI implementation
 
 | Task | Status | Owner | Notes |
 |------|--------|-------|-------|
-| Project scaffolding (monorepo setup) | 🔄 In Progress | - | Using pnpm workspaces |
-| Database schema design & migrations | ⏳ Pending | - | Prisma setup |
-| Docker Compose dev environment | ⏳ Pending | - | Postgres + Redis + MinIO |
-| API boilerplate with routing | ⏳ Pending | - | Express + Zod |
-| Basic CRUD for Papers | ⏳ Pending | - | Create, Read, List |
-| File upload/download endpoints | ⏳ Pending | - | PDF handling |
-| Frontend boilerplate (Next.js) | ⏳ Pending | - | Tailwind + shadcn |
-| Basic paper listing UI | ⏳ Pending | - | Search + filters |
+| Vite + React 19 setup | ✅ Done | - | Port 3000 |
+| Tailwind v4 theming | ✅ Done | - | Custom color tokens |
+| Page routing | ✅ Done | - | Home, Paper, Upload, Settings, Docs |
+| UI component library | ✅ Done | - | Button, Card, Input, Badge, Textarea |
+| Mock data displays | ✅ Done | - | Static paper/review data |
+
+---
+
+### Phase 1: Backend API (Week 1-2) 🔨 CURRENT
+**Goal**: Core API to serve frontend data needs
+
+| Task | Status | Owner | Notes |
+|------|--------|-------|-------|
+| Backend project setup | ✅ Done | - | Express + TypeScript |
+| Database schema (Prisma) | ✅ Done | - | Papers, Reviews, AgentConfigs, Users |
+| Docker Compose stack | ✅ Done | - | Postgres + Redis + MinIO |
+| Environment configuration | ✅ Done | - | .env.example provided |
+| Papers API | ✅ Done | - | CRUD + list with filters + search |
+| File upload/download | 🔄 Partial | - | URL-based, file service pending |
+| Reviews API | ✅ Done | - | AI + Human review endpoints |
+| Agent Config API | ✅ Done | - | CRUD + versioning + activation |
+| Search endpoint | ✅ Done | - | Query + filters + trending keywords |
+| Database seed script | ✅ Done | - | Sample data for development |
 
 **Milestone Definition of Done**:
-- [ ] Can upload a paper via API
-- [ ] Can view paper list in UI
-- [ ] Can download PDF
+- [ ] Backend API serves paper data to frontend
+- [ ] Can upload paper (PDF + metadata)
+- [ ] Can view paper list with pagination
+- [ ] Can view paper details with reviews
+- [ ] Search works with text queries
 - [ ] All services run via `docker-compose up`
 
 ---
@@ -156,6 +173,8 @@
 |------|--------------|------------|
 | 2026-03-21 | Initial development plan created | System |
 | 2026-03-21 | GitHub repo initialized, initial commit pushed | System |
+| 2026-03-21 | Frontend UI landed - React 19 + Vite + Tailwind | System |
+| 2026-03-21 | Backend API implemented - Express + Prisma + Docker | System |
 
 ---
 
