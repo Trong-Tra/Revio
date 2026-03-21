@@ -84,7 +84,7 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Invalid email address',
                         },
                       })}
-                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-white/80 focus:placeholder:text-outline-variant/60 text-on-surface font-body outline-none ${
+                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-white/80 focus:placeholder:text-on-surface-variant text-on-surface font-body outline-none ${
                         errors.email ? 'ring-1 ring-red-500/30' : ''
                       }`}
                       placeholder="researcher@university.edu" 
@@ -117,7 +117,7 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Password must be at least 6 characters',
                         },
                       })}
-                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-white/80 focus:placeholder:text-outline-variant/60 text-on-surface font-body outline-none ${
+                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-white/80 focus:placeholder:text-on-surface-variant text-on-surface font-body outline-none ${
                         errors.password ? 'ring-1 ring-red-500/30' : ''
                       }`}
                       placeholder="••••••••" 

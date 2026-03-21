@@ -29,8 +29,18 @@ export default function Profile({ setView }: { setView?: (v: ViewState) => void 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="flex flex-col md:flex-row gap-16 lg:gap-24 items-start mb-32"
+          className="relative flex flex-col md:flex-row gap-16 lg:gap-24 items-start mb-32"
         >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleLogout}
+            className="absolute top-0 right-0 bg-red-500/10 text-red-700 border border-red-500/30 px-6 py-2.5 rounded-full font-headline text-sm font-semibold hover:bg-red-500/20 active:scale-95 transition-all inline-flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </motion.button>
+
           <div className="relative group shrink-0">
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -69,19 +79,19 @@ export default function Profile({ setView }: { setView?: (v: ViewState) => void 
               className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 max-w-2xl"
             >
               <div className="space-y-1">
-                <span className="font-label text-[10px] uppercase tracking-tighter text-outline-variant">Email Address</span>
+                <span className="font-label text-[10px] uppercase tracking-tighter text-on-surface-variant">Email Address</span>
                 <p className="text-on-surface font-medium">{user?.email || 'e.thorne@synthetica.res.ai'}</p>
               </div>
               <div className="space-y-1">
-                <span className="font-label text-[10px] uppercase tracking-tighter text-outline-variant">Affiliation</span>
+                <span className="font-label text-[10px] uppercase tracking-tighter text-on-surface-variant">Affiliation</span>
                 <p className="text-on-surface font-medium">{user?.affiliation || 'Zurich Institute of Technology'}</p>
               </div>
               <div className="space-y-1">
-                <span className="font-label text-[10px] uppercase tracking-tighter text-outline-variant">Orcid ID</span>
+                <span className="font-label text-[10px] uppercase tracking-tighter text-on-surface-variant">Orcid ID</span>
                 <p className="font-mono text-sm text-primary tracking-tight">{user?.orcidId || '0000-0002-1825-0097'}</p>
               </div>
               <div className="space-y-1">
-                <span className="font-label text-[10px] uppercase tracking-tighter text-outline-variant">Location</span>
+                <span className="font-label text-[10px] uppercase tracking-tighter text-on-surface-variant">Location</span>
                 <p className="text-on-surface font-medium">Zurich, Switzerland</p>
               </div>
             </motion.div>
@@ -105,15 +115,6 @@ export default function Profile({ setView }: { setView?: (v: ViewState) => void 
                 className="bg-surface-container-low text-on-surface border border-outline-variant/20 px-6 py-2.5 rounded-full font-headline text-sm font-semibold hover:bg-surface-container-high active:scale-95 transition-all"
               >
                 View Analytics
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
-                className="bg-red-500/10 text-red-700 border border-red-500/30 px-6 py-2.5 rounded-full font-headline text-sm font-semibold hover:bg-red-500/20 active:scale-95 transition-all inline-flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
               </motion.button>
             </motion.div>
           </div>

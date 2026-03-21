@@ -120,7 +120,7 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Name must be at least 2 characters',
                         },
                       })}
-                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface placeholder:text-outline-variant/60 focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all outline-none ${
+                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface placeholder:text-white/80 focus:placeholder:text-on-surface-variant focus:text-on-surface focus:ring-1 focus:ring-primary/20 focus:bg-white transition-all outline-none ${
                         errors.name ? 'ring-1 ring-red-500/30' : ''
                       }`}
                       placeholder="Dr. Julian Thorne" 
@@ -148,7 +148,7 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Invalid email address',
                         },
                       })}
-                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface placeholder:text-outline-variant/60 focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all outline-none ${
+                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface placeholder:text-white/80 focus:placeholder:text-on-surface-variant focus:text-on-surface focus:ring-1 focus:ring-primary/20 focus:bg-white transition-all outline-none ${
                         errors.email ? 'ring-1 ring-red-500/30' : ''
                       }`}
                       placeholder="j.thorne@atelier.edu" 
@@ -176,7 +176,7 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Password must be at least 8 characters',
                         },
                       })}
-                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface font-mono placeholder:text-outline-variant/60 focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all outline-none ${
+                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface font-mono placeholder:text-white/80 focus:placeholder:text-on-surface-variant focus:text-on-surface focus:ring-1 focus:ring-primary/20 focus:bg-white transition-all outline-none ${
                         errors.password ? 'ring-1 ring-red-500/30' : ''
                       }`}
                       placeholder="•••• •••• •••• ••••" 
@@ -202,7 +202,7 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                         validate: (value) =>
                           value === password || 'Passwords do not match',
                       })}
-                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface font-mono placeholder:text-outline-variant/60 focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all outline-none ${
+                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface font-mono placeholder:text-white/80 focus:placeholder:text-on-surface-variant focus:text-on-surface focus:ring-1 focus:ring-primary/20 focus:bg-white transition-all outline-none ${
                         errors.confirmPassword ? 'ring-1 ring-red-500/30' : ''
                       }`}
                       placeholder="•••• •••• •••• ••••" 
