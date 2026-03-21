@@ -112,7 +112,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: transformAgent(config)
-  };
+  });
 }));
 
 // Create new config
@@ -164,7 +164,6 @@ router.put('/:id', asyncHandler(async (req, res) => {
       reviewUrl: current.reviewUrl,
       fieldsUrl: current.fieldsUrl,
       ethicsUrl: current.ethicsUrl,
-      skillsMarkdown: validated.skillsMarkdown || current.skillsMarkdown,
       tone: validated.tone || current.tone,
       systemPrompt: validated.systemPrompt || current.systemPrompt,
       fields: validated.fields || current.fields,
@@ -218,7 +217,7 @@ router.post('/:id/activate', asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: updated
-  };
+  });
 }));
 
 // Delete config
