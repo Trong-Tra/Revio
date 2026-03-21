@@ -112,7 +112,15 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📚 API docs available at http://localhost:${PORT}/health`);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const baseUrl = isProduction 
+    ? (process.env.RENDER_EXTERNAL_URL || `https://your-deployed-url.com`)
+    : `http://localhost:${PORT}`;
+  
+  console.log(`🚀 Server running on ${baseUrl}`);
+  console.log(`📚 API docs available at ${baseUrl}/health`);
   console.log(`🤖 TinyFish integration: ${process.env.TINYFISH_API_KEY ? 'enabled' : 'disabled (local fallback)'}`);
+  if (isProduction) {
+    console.log(`📊 Hackathon MVP: Max 10 papers allowed`);
+  }
 });
