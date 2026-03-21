@@ -23,14 +23,17 @@ const PORT = process.env.PORT || 3001;
 app.use(helmet());
 
 // CORS - support multiple origins (Vercel preview deployments)
+// Strip trailing slashes from FRONTEND_URL to avoid mismatch
+const frontendUrl = process.env.FRONTEND_URL?.replace(/\/$/, '');
+
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  process.env.FRONTEND_URL,
+  frontendUrl,
 ].filter(Boolean) as string[];
 
 // Also allow all Vercel preview deployments if FRONTEND_URL is set
-if (process.env.FRONTEND_URL?.includes('vercel.app')) {
+if (frontendUrl?.includes('vercel.app')) {
   allowedOrigins.push('https://*.vercel.app');
 }
 
