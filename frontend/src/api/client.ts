@@ -126,6 +126,44 @@ export const papersApi = {
       body: JSON.stringify(paper),
     }),
   
+  upload: async (
+    file: File,
+    metadata: {
+      title: string;
+      authors: string[];
+      abstract: string;
+      keywords: string[];
+      field: string;
+      doi?: string;
+    }
+  ): Promise<ApiResponse<Paper>> => {
+    const formData = new FormData();
+    formData.append('pdf', file);
+    formData.append('title', metadata.title);
+    formData.append('authors', metadata.authors.join(', '));
+    formData.append('abstract', metadata.abstract);
+    formData.append('keywords', metadata.keywords.join(', '));
+    formData.append('field', metadata.field);
+    if (metadata.doi) formData.append('doi', metadata.doi);
+
+    const response = await fetch(`${API_BASE_URL}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new ApiError(
+        data.detail || data.title || 'Upload failed',
+        response.status,
+        data
+      );
+    }
+
+    return data;
+  },
+  
   update: (id: string, paper: Partial<Paper>) =>
     fetchApi<Paper>(`/papers/${id}`, {
       method: 'PATCH',

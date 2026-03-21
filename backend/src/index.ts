@@ -7,6 +7,7 @@ import { papersRouter } from './routes/papers.js';
 import { reviewsRouter } from './routes/reviews.js';
 import { agentConfigsRouter } from './routes/agent-configs.js';
 import { searchRouter } from './routes/search.js';
+import { uploadRouter } from './routes/upload.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use('/api/v1/papers', papersRouter);
 app.use('/api/v1/reviews', reviewsRouter);
 app.use('/api/v1/agent-configs', agentConfigsRouter);
 app.use('/api/v1/search', searchRouter);
+app.use('/api/v1/upload', uploadRouter);
 
 // 404 handler
 app.use((_req, res) => {
