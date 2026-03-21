@@ -290,6 +290,7 @@ weighted_match = Σ(skill_weight * match) / Σ(skill_weights)
 | 2026-03-21 | Frontend rewired to backend API |
 | 2026-03-21 | **Context & Development docs updated with Qualification Engine vision** |
 | 2026-03-21 | Paper detail review UX updated: full-width sections, horizontal fixed-height review cards, and scrollable text-only review modal |
+| 2026-03-21 | Paper detail Result panel refined (owner-only visibility, decision indicator, TinyFish attribution) and SignIn identity label contrast improved |
 
 ---
 

@@ -73,7 +73,7 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                 <div className="space-y-2">
                   <label className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant" htmlFor="email">Email</label>
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors w-5 h-5" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 group-focus-within:text-primary transition-colors w-5 h-5" />
                     <input 
                       type="email" 
                       id="email"
@@ -84,7 +84,7 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Invalid email address',
                         },
                       })}
-                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-outline-variant/60 text-on-surface font-body outline-none ${
+                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-white/80 focus:placeholder:text-outline-variant/60 text-on-surface font-body outline-none ${
                         errors.email ? 'ring-1 ring-red-500/30' : ''
                       }`}
                       placeholder="researcher@university.edu" 
@@ -106,7 +106,7 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                     <label className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant" htmlFor="password">Password</label>
                   </div>
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors w-5 h-5" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 group-focus-within:text-primary transition-colors w-5 h-5" />
                     <input 
                       type="password" 
                       id="password"
@@ -117,7 +117,7 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Password must be at least 6 characters',
                         },
                       })}
-                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-outline-variant/60 text-on-surface font-body outline-none ${
+                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-white/80 focus:placeholder:text-outline-variant/60 text-on-surface font-body outline-none ${
                         errors.password ? 'ring-1 ring-red-500/30' : ''
                       }`}
                       placeholder="••••••••" 
@@ -150,7 +150,7 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
 
               <div className="relative my-10 flex items-center">
                 <div className="flex-grow border-t border-outline-variant/20"></div>
-                <span className="flex-shrink mx-4 font-label text-[10px] uppercase tracking-widest text-outline-variant">Verified Identities</span>
+                <span className="flex-shrink mx-4 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Verified Identities</span>
                 <div className="flex-grow border-t border-outline-variant/20"></div>
               </div>
 
