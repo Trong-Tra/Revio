@@ -1,14 +1,19 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Download, ExternalLink, FileText, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, Bot, Users, FileText, Loader2 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { Link } from "react-router-dom";
+import { animationTiming, premiumEase } from "../lib/animations";
 import { usePaper } from "../hooks/usePapers";
+import { useAuth } from "../hooks/useAuth";
 
 export function PaperDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
   
   const { paper, loading, error } = usePaper(id);
 
@@ -30,25 +35,18 @@ export function PaperDetail() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Discoveries
         </Link>
-        <div className="text-center py-20">
-          <p className="text-red-500 mb-4">{error || "Paper not found"}</p>
-          <Link to="/">
-            <Button>Back to Home</Button>
-          </Link>
-        </div>
+        <Card className="border border-outline-variant/30">
+          <CardHeader>
+            <CardTitle>Paper Not Found</CardTitle>
+            <CardDescription>{error || "No paper found for this ID"}</CardDescription>
+          </CardHeader>
+        </Card>
       </div>
     );
   }
 
-  const ratingProgress = (paper.rating / 10) * 100;
-  const decisionLabel: Record<string, string> = {
-    ACCEPT: 'Accepted',
-    ACCEPT_WITH_REVISIONS: 'Accept with Revisions',
-    MINOR_REVISIONS: 'Minor Revisions',
-    MAJOR_REVISIONS: 'Major Revisions',
-    REJECT: 'Rejected',
-    PENDING: 'Pending',
-  };
+  const canViewResultSection = !!user;
+  const selectedReview = paper.reviews?.find((r: any) => r.id === selectedReviewId) ?? null;
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-6 max-w-7xl mx-auto">
@@ -57,27 +55,24 @@ export function PaperDetail() {
         Back to Discoveries
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className={`grid grid-cols-1 gap-8 ${canViewResultSection ? "lg:grid-cols-3" : "max-w-4xl mx-auto"}`}>
         {/* Main Content Area */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className={`space-y-6 ${canViewResultSection ? "lg:col-span-2" : ""}`}>
           <header className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <Badge variant="provenance">Verified by Meta-Agent</Badge>
-              {paper.doi && (
-                <Badge variant="outline">DOI: {paper.doi}</Badge>
+              {paper.conferenceName && (
+                <Badge variant="outline" className="hover:border-primary hover:text-primary transition-colors">
+                  Conference: {paper.conferenceName}
+                </Badge>
               )}
             </div>
             <h1 className="text-3xl md:text-4xl font-label font-bold text-on-surface mb-4 leading-tight">
               {paper.title}
             </h1>
             <p className="text-lg text-on-surface-variant">
-              {paper.authors?.join(', ')}
+              {Array.isArray(paper.authors) ? paper.authors.join(', ') : paper.authors}
             </p>
-            {paper.conferenceName && (
-              <p className="text-sm text-on-surface-variant mt-2">
-                {paper.conferenceName}
-              </p>
-            )}
           </header>
 
           <div className="bg-surface-container-high rounded-2xl border border-outline-variant/30 h-[600px] flex flex-col items-center justify-center relative overflow-hidden group">
@@ -108,122 +103,171 @@ export function PaperDetail() {
               )}
             </div>
           </div>
+        </div>
 
-          <Card className="border border-outline-variant/30">
-            <CardHeader>
-              <CardTitle>Abstract</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-on-surface-variant leading-relaxed">
-                {paper.abstract}
-              </p>
-            </CardContent>
-          </Card>
-
-          {paper.keywords && paper.keywords.length > 0 && (
-            <Card className="border border-outline-variant/30">
+        {/* Sidebar Area */}
+        {canViewResultSection && (
+          <motion.div
+            className="space-y-6"
+            initial={{ x: 30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: animationTiming.duration.slow, delay: 0.3, ease: premiumEase }}
+          >
+            {/* Meta-Score Card */}
+            <Card className="border border-outline-variant/30 bg-gradient-to-br from-surface-container-lowest to-surface-container-low">
               <CardHeader>
-                <CardTitle>Keywords</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {paper.keywords.map((tag) => (
-                    <Badge key={tag} variant="outline">{tag}</Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Reviews Section */}
-          {paper.reviews && paper.reviews.length > 0 && (
-            <Card className="border border-outline-variant/30">
-              <CardHeader>
-                <CardTitle>Reviews ({paper.reviews.length})</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-on-surface-variant" />
+                  Meta-Score
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {paper.reviews.map((review) => (
-                  <div key={review.id} className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/50">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-sm">
-                        {review.reviewerType === 'AI' ? '🤖 AI Reviewer' : review.reviewer?.name || 'Reviewer'}
-                      </span>
-                      <Badge variant={review.reviewerType === 'AI' ? "provenance" : "outline"}>
-                        {review.reviewerType === 'AI' ? 'AI Agent' : 'Human'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 mb-3">
-                      <span className="text-sm">Score: <strong>{review.score?.toFixed(1)}/10</strong></span>
-                    </div>
-                    {review.summary && (
-                      <p className="text-sm text-on-surface-variant">{review.summary}</p>
-                    )}
-                    {review.feedback && (
-                      <div className="mt-3 p-3 bg-surface-container rounded-lg">
-                        <p className="text-sm text-on-surface-variant whitespace-pre-line">{review.feedback}</p>
-                      </div>
-                    )}
+                <div className="flex items-center justify-between">
+                  <span className="text-5xl font-label font-bold text-primary">
+                    {paper.rating?.toFixed(1) || "0.0"}
+                  </span>
+                  <span className="text-xl text-on-surface-variant font-label">/10</span>
+                </div>
+                <div className="w-full bg-surface-container-highest rounded-full h-2.5">
+                  <div 
+                    className="bg-gradient-to-r from-secondary to-primary h-2.5 rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${((paper.rating || 0) / 10) * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm text-on-surface-variant">
+                  Aggregated from {paper.reviews?.length || 0} verified reviews
+                </p>
+                <div className="pt-4 border-t border-outline-variant/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Decision</span>
+                    <Badge variant={paper.decision === 'ACCEPT' ? 'provenance' : 'outline'}>
+                      {paper.decision}
+                    </Badge>
                   </div>
-                ))}
+                </div>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </motion.div>
+        )}
+      </div>
 
-        {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="border border-outline-variant/30 bg-gradient-to-br from-surface-container-lowest to-surface-container-low">
-            <CardHeader>
-              <CardTitle className="text-base">Meta-Score</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-5xl font-label font-bold text-primary">{paper.rating.toFixed(1)}</span>
-                <span className="text-xl text-on-surface-variant font-label">/10</span>
-              </div>
-              <div className="w-full bg-surface-container-highest rounded-full h-2.5">
-                <div 
-                  className="bg-gradient-to-r from-secondary to-primary h-2.5 rounded-full transition-all duration-1000 ease-out"
-                  style={{ width: `${ratingProgress}%` }}
-                ></div>
-              </div>
-              <p className="text-sm text-on-surface-variant">
-                Aggregated from {paper.reviews?.length || 0} verified reviews
-              </p>
-              <div className="pt-4 border-t border-outline-variant/30">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Decision</span>
-                  <Badge variant={paper.decision === 'ACCEPT' ? 'provenance' : 'outline'}>
-                    {decisionLabel[paper.decision] || paper.decision}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="mt-8 space-y-6">
+        {/* Abstract */}
+        <Card className="border border-outline-variant/30">
+          <CardHeader>
+            <CardTitle>Abstract</CardTitle>
+          </CardHeader>
+          <CardContent className="max-h-44 overflow-y-auto">
+            <p className="text-on-surface-variant leading-relaxed">{paper.abstract}</p>
+          </CardContent>
+        </Card>
 
+        {/* Keywords */}
+        {paper.keywords && paper.keywords.length > 0 && (
           <Card className="border border-outline-variant/30">
             <CardHeader>
-              <CardTitle className="text-base">Paper Info</CardTitle>
+              <CardTitle>Keywords</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-on-surface-variant">Tier</span>
-                <Badge variant="outline">{paper.tier}</Badge>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {paper.keywords.map((tag: string) => (
+                  <Badge key={tag} variant="outline">{tag}</Badge>
+                ))}
               </div>
-              <div className="flex justify-between">
-                <span className="text-on-surface-variant">Field</span>
-                <span>{paper.field}</span>
-              </div>
-              {paper.skillConfidence !== undefined && (
-                <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Skill Confidence</span>
-                  <span>{(paper.skillConfidence * 100).toFixed(0)}%</span>
-                </div>
-              )}
             </CardContent>
           </Card>
-        </div>
+        )}
+
+        {/* Peer Review Community */}
+        {paper.reviews && paper.reviews.length > 0 && (
+          <Card className="border border-outline-variant/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-on-surface-variant" />
+                Peer Review Community ({paper.reviews.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4 overflow-x-auto pb-2 pr-1 snap-x snap-mandatory">
+                {paper.reviews.map((review: any) => (
+                  <div
+                    key={review.id}
+                    className="w-72 h-80 shrink-0 snap-start p-4 bg-surface-container-low rounded-xl border border-outline-variant/50 flex flex-col"
+                  >
+                    <div className="flex items-center justify-between mb-2 gap-3">
+                      <span className="font-medium text-sm">Reviewer {review.agentId.slice(0, 8)}...</span>
+                      <Badge variant={review.attitude === 'POSITIVE' ? 'provenance' : review.attitude === 'NEGATIVE' ? 'destructive' : 'secondary'}>
+                        {review.attitude}
+                      </Badge>
+                    </div>
+                    <div className="h-32 overflow-y-auto mb-3">
+                      <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-6">
+                        {review.text.slice(0, 200)}...
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs mt-auto"
+                      onClick={() => setSelectedReviewId(review.id)}
+                    >
+                      Read Full Review
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* Review Detail Modal */}
+      <AnimatePresence>
+        {selectedReview && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <motion.div
+              className="absolute inset-0 bg-on-surface/60"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, ease: premiumEase }}
+              onClick={() => setSelectedReviewId(null)}
+            />
+            <motion.div
+              className="relative z-10 w-full max-w-2xl bg-surface-container-lowest rounded-xl p-6 shadow-ambient max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.4, ease: premiumEase }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-headline font-bold text-on-surface">Detailed Review</h3>
+                <Button variant="outline" size="sm" onClick={() => setSelectedReviewId(null)}>
+                  Close
+                </Button>
+              </div>
+
+              <div className="rounded-lg border border-outline-variant/40 bg-surface-container-low p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-on-surface">Reviewer {selectedReview.agentId.slice(0, 8)}...</p>
+                    <p className="text-xs text-on-surface-variant">Attitude: {selectedReview.attitude}</p>
+                  </div>
+                  <Badge variant={selectedReview.attitude === 'POSITIVE' ? 'provenance' : selectedReview.attitude === 'NEGATIVE' ? 'destructive' : 'secondary'}>
+                    {selectedReview.attitude}
+                  </Badge>
+                </div>
+                <div className="max-h-96 overflow-y-auto pr-1">
+                  <p className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-line">
+                    {selectedReview.text}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -184,7 +184,7 @@ async function formCouncil(paper: Paper, size: number = 3): Promise<Agent[]> {
 | Task | Status | Notes |
 |------|--------|-------|
 | Human review submission | ⏳ Pending | Form to submit human review |
-| Agent council display | ⏳ Pending | Show all agent reviews to human |
+| Agent council display | 🔨 In Progress | Paper detail UI now supports horizontal review cards + text-first detail modal |
 | Consensus visualization | ⏳ Pending | Graphs of agent agreement |
 | Helpfulness rating | ⏳ Pending | Human rates each agent review |
 | Review comparison | ⏳ Pending | Side-by-side agent vs human |
@@ -289,6 +289,7 @@ weighted_match = Σ(skill_weight * match) / Σ(skill_weights)
 | 2026-03-21 | Real published papers (Lotus Bridge, Proof-of-Merit) seeded |
 | 2026-03-21 | Frontend rewired to backend API |
 | 2026-03-21 | **Context & Development docs updated with Qualification Engine vision** |
+| 2026-03-21 | Paper detail review UX updated: full-width sections, horizontal fixed-height review cards, and scrollable text-only review modal |
 
 ---
 
