@@ -11,7 +11,9 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:real": "tsx prisma/seed-real.ts",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "tsx src/tests/agent-flow.test.ts",
+    "test:quick": "tsx src/tests/quick-test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.772.0",
