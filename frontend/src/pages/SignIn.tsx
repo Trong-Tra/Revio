@@ -73,7 +73,7 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                 <div className="space-y-2">
                   <label className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant" htmlFor="email">Email</label>
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 group-focus-within:text-primary transition-colors w-5 h-5" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors w-5 h-5" />
                     <input 
                       type="email" 
                       id="email"
@@ -84,10 +84,9 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Invalid email address',
                         },
                       })}
-                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-white/80 focus:placeholder:text-on-surface-variant text-on-surface font-body outline-none ${
-                        errors.email ? 'ring-1 ring-red-500/30' : ''
+                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border border-on-surface/40 rounded-lg focus:border-on-surface/60 transition-all duration-300 text-on-surface font-body outline-none ${
+                        errors.email ? 'border-red-500/40' : ''
                       }`}
-                      placeholder="researcher@university.edu" 
                     />
                   </div>
                   {errors.email && (
@@ -106,7 +105,7 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                     <label className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant" htmlFor="password">Password</label>
                   </div>
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 group-focus-within:text-primary transition-colors w-5 h-5" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors w-5 h-5" />
                     <input 
                       type="password" 
                       id="password"
@@ -117,10 +116,9 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Password must be at least 6 characters',
                         },
                       })}
-                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-white/80 focus:placeholder:text-on-surface-variant text-on-surface font-body outline-none ${
-                        errors.password ? 'ring-1 ring-red-500/30' : ''
+                      className={`w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border border-on-surface/40 rounded-lg focus:border-on-surface/60 transition-all duration-300 text-on-surface font-body outline-none ${
+                        errors.password ? 'border-red-500/40' : ''
                       }`}
-                      placeholder="••••••••" 
                     />
                   </div>
                   {errors.password && (
