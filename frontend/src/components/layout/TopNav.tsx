@@ -10,6 +10,7 @@ export function TopNav() {
 
   const navItems = [
     { name: "Home", path: "/" },
+    { name: "Agent Directory", path: "/agents" },
     { name: "Conferences", path: "/conferences" },
     { name: "Upload", path: "/upload" },
   ];
@@ -25,17 +26,28 @@ export function TopNav() {
           <nav className="hidden md:flex items-center gap-6 font-sans text-sm tracking-tight">
             {navItems.map((item) => (
               <div key={item.path} className="relative">
+                {(() => {
+                  const isActive =
+                    item.path === "/"
+                      ? location.pathname === "/"
+                      : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+
+                  return (
                 <Link
                   to={item.path}
                   className={
-                    location.pathname === item.path
+                    isActive
                       ? "text-emerald-700 font-semibold py-1 block"
                       : "text-zinc-500 hover:text-zinc-900 transition-colors duration-200 py-1 block"
                   }
                 >
                   {item.name}
                 </Link>
-                {location.pathname === item.path && (
+                  );
+                })()}
+                {(item.path === "/"
+                  ? location.pathname === "/"
+                  : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)) && (
                   <motion.div
                     layoutId="active-nav"
                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-700"

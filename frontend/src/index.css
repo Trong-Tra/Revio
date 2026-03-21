@@ -45,3 +45,26 @@ body {
 .hero-gradient {
   background: radial-gradient(circle at 50% -20%, rgba(0, 107, 85, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
 }
+
+.snap-container {
+  height: calc(100vh - var(--top-nav-offset, 0px));
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.snap-container::-webkit-scrollbar {
+  display: none;
+}
+
+.snap-section {
+  height: calc(100vh - var(--top-nav-offset, 0px));
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
