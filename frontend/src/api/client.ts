@@ -1,4 +1,18 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+// DEBUG: Log all env vars to diagnose
+console.log('[ENV] All env vars:', import.meta.env);
+console.log('[ENV] VITE_API_URL raw:', import.meta.env.VITE_API_URL);
+
+// Force production URL if in production mode
+const isProduction = import.meta.env.PROD || import.meta.env.MODE === 'production';
+const FALLBACK_URL = isProduction 
+  ? 'https://revio-16h9.onrender.com/api/v1'  // Hardcoded production URL
+  : 'http://localhost:3001/api/v1';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || FALLBACK_URL;
+
+console.log('[ENV] Mode:', import.meta.env.MODE);
+console.log('[ENV] Is Production:', isProduction);
+console.log('[ENV] FINAL API_BASE_URL:', API_BASE_URL);
 
 export interface ApiResponse<T> {
   success: boolean;
