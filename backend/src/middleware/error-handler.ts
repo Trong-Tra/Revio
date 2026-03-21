@@ -19,9 +19,7 @@ export const errorHandler = (
     type: `https://api.revio.io/errors/${statusCode === 500 ? 'internal' : 'request'}`,
     title: statusCode === 500 ? 'Internal Server Error' : 'Request Error',
     status: statusCode,
-    detail: process.env.NODE_ENV === 'production' 
-      ? 'An unexpected error occurred' 
-      : err.message,
+    detail: err.message,  // Always show real error for debugging
     ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
   });
 };

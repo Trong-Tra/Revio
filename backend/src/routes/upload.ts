@@ -29,6 +29,11 @@ router.post('/',
   requireAuth,
   uploadSingle,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    console.log('[Upload] Request received');
+    console.log('[Upload] User:', req.userId);
+    console.log('[Upload] File:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file');
+    console.log('[Upload] Body:', req.body);
+    
     if (!req.file) {
       const error = new Error('PDF file is required');
       (error as any).statusCode = 400;
@@ -39,6 +44,7 @@ router.post('/',
 
     // HACKATHON: Check paper limit
     const paperCount = await prisma.paper.count();
+    console.log(`[Upload] Current paper count: ${paperCount}/${MAX_PAPERS}`);
     if (paperCount >= MAX_PAPERS) {
       const error = new Error(
         `Hackathon MVP limit: Maximum ${MAX_PAPERS} papers allowed. ` +
@@ -49,7 +55,15 @@ router.post('/',
     }
 
     // Parse and validate metadata
-    const validated = uploadSchema.parse(req.body);
+    console.log('[Upload] Validating metadata...');
+    let validated;
+    try {
+      validated = uploadSchema.parse(req.body);
+      console.log('[Upload] Validation passed:', validated);
+    } catch (validationError: any) {
+      console.error('[Upload] Validation failed:', validationError.errors);
+      throw validationError;
+    }
 
     // Handle conference assignment
     let conferenceId = validated.conferenceId;
@@ -90,13 +104,16 @@ router.post('/',
     }
 
     // Upload PDF to storage
+    console.log('[Upload] Uploading to R2...');
     const uploadResult = await storage.uploadFile(
       req.file.buffer,
       req.file.originalname,
       req.file.mimetype
     );
+    console.log('[Upload] R2 upload successful:', uploadResult.url.substring(0, 60) + '...');
 
     // Create paper record
+    console.log('[Upload] Creating paper in database...');
     const paper = await prisma.paper.create({
       data: {
         title: validated.title,
@@ -111,6 +128,7 @@ router.post('/',
         userId: userId!,
       },
     });
+    console.log('[Upload] Paper created:', paper.id);
     
     // Get conference name separately
     const conference = conferenceId 
