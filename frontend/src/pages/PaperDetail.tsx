@@ -139,13 +139,13 @@ Core findings are validated with high confidence, and the proposed approach appe
                 </motion.div>
                 <div className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-3 flex items-center justify-between mt-2">
                   <span className="text-sm text-on-surface-variant">Decision</span>
-                  <span className={`text-sm font-semibold ${paper.decision === "Accepted" ? "text-primary" : "text-amber-700"}`}>
-                    {paper.decision || "Pending"}
+                  <span className={`text-sm font-semibold ${paper.finalResult?.toUpperCase() === "ACCEPT" ? "text-primary" : "text-amber-700"}`}>
+                    {paper.finalResult || "Pending"}
                   </span>
                 </div>
                 <div className="mt-0.5 h-0.5 w-full rounded-full bg-surface-container-high overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${paper.decision === "Accepted" ? "bg-primary" : "bg-amber-600"}`}
+                    className={`h-full rounded-full ${paper.finalResult?.toUpperCase() === "ACCEPT" ? "bg-primary" : "bg-amber-600"}`}
                     style={{ width: "100%" }}
                   />
                 </div>

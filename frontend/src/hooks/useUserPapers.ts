@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { userPapersApi, type Paper, type Review } from '../api/client';
+import { userPapersApi, papersApi, type Paper, type Review } from '../api/client';
 
 export type { Paper, Review };
 
@@ -9,12 +9,15 @@ interface UseUserPapersReturn {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  deletePaper: (paperId: string) => Promise<void>;
+  isDeleting: boolean;
 }
 
 export function useUserPapers(userId: string | undefined): UseUserPapersReturn {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchUserData = useCallback(async () => {
@@ -42,6 +45,19 @@ export function useUserPapers(userId: string | undefined): UseUserPapersReturn {
     }
   }, [userId]);
 
+  const deletePaper = useCallback(async (paperId: string) => {
+    setIsDeleting(true);
+    try {
+      await papersApi.delete(paperId);
+      // Remove paper from local state
+      setPapers(prev => prev.filter(p => p.id !== paperId));
+    } catch (err) {
+      throw err;
+    } finally {
+      setIsDeleting(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
@@ -52,5 +68,7 @@ export function useUserPapers(userId: string | undefined): UseUserPapersReturn {
     loading,
     error,
     refetch: fetchUserData,
+    deletePaper,
+    isDeleting,
   };
 }

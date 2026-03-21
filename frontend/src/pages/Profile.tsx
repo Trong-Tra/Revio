@@ -43,11 +43,12 @@ const EditableField: React.FC<EditableFieldProps> = ({ label, value, isEditing, 
 export default function Profile({ setView }: { setView?: (v: ViewState) => void }) {
   const navigate = useNavigate();
   const { user, signOut, setUser } = useAuth();
-  const { papers, isLoading } = useUserPapers(user?.id);
+  const { papers, isLoading, deletePaper, isDeleting } = useUserPapers(user?.id);
   
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   
   // Editable form state
   const [formData, setFormData] = useState({
@@ -323,6 +324,15 @@ export default function Profile({ setView }: { setView?: (v: ViewState) => void 
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {deleteError && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="col-span-full p-4 bg-red-50 text-red-700 rounded-lg text-sm mb-4"
+                >
+                  {deleteError}
+                </motion.div>
+              )}
               <AnimatePresence mode="popLayout">
                 {papers.map((paper, index) => (
                   <motion.div
@@ -332,7 +342,12 @@ export default function Profile({ setView }: { setView?: (v: ViewState) => void 
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ delay: index * 0.1, duration: 0.3 }}
                   >
-                    <ProfilePaperCard paper={paper} onViewDetails={handleViewPaper} />
+                    <ProfilePaperCard 
+                      paper={paper} 
+                      onViewDetails={handleViewPaper} 
+                      onDelete={deletePaper}
+                      isDeleting={isDeleting}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>

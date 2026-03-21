@@ -61,7 +61,7 @@ export default function PaperLibrary() {
         <header className="mb-16">
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter text-on-surface mb-6">Research Library</h1>
           <p className="max-w-2xl text-lg text-on-surface-variant leading-relaxed">
-            A curated repository of papers published across the Revio platform. Explore ongoing discoveries,
+            A curated repository of papers created across the Revio platform. Explore ongoing discoveries,
             peer-reviewed breakthroughs, and conference-ready manuscripts.
           </p>
         </header>
@@ -141,7 +141,7 @@ export default function PaperLibrary() {
                     )}
                   </div>
                   <div className="flex items-center justify-between pt-6 border-t border-outline-variant/20">
-                    <span className="font-mono text-[10px] text-outline uppercase">Published: {paper.date}</span>
+                    <span className="font-mono text-[10px] text-outline uppercase">Created: {paper.date}</span>
                     <Link
                       to={`/paper/${paper.id}`}
                       className="text-xs font-label font-bold uppercase tracking-widest flex items-center gap-2 group-hover:text-primary transition-colors cursor-pointer"

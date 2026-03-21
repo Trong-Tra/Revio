@@ -179,7 +179,10 @@ export default function AgentProfilePage() {
           filtered.map((paper: any, idx: number) => {
             // Find this agent's review for this paper
             const agentReview = paper.reviews?.find((r: any) => r.agentId === id);
-            const score = agentReview?.overallScore || paper.rating || 7.0;
+            // Score based on agent's review attitude
+            const score = agentReview 
+              ? agentReview.attitude === 'POSITIVE' ? 8 : agentReview.attitude === 'NEGATIVE' ? 4 : 6
+              : 7.0;
             
             // Create aspects from review content if available
             const aspects: ReviewAspect[] = agentReview?.aspects || [
@@ -207,7 +210,7 @@ export default function AgentProfilePage() {
                         <span className="font-mono text-[10px] text-primary bg-primary/5 px-2 py-0.5 rounded">DOI: {paper.doi}</span>
                       )}
                       <span className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant">{paper.date}</span>
-                      <span className="font-label text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-surface-container text-on-surface-variant">{paper.decision || "Pending"}</span>
+                      <span className="font-label text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-surface-container text-on-surface-variant">{paper.finalResult || "Pending"}</span>
                     </div>
                     <h2 className="text-2xl font-bold tracking-tight">{paper.title}</h2>
                     <p className="text-on-surface-variant">{paper.description || paper.abstract?.slice(0, 200)}...</p>
