@@ -1,7 +1,7 @@
 import { useState, useRef, ChangeEvent, DragEvent, useEffect } from 'react';
-import { UploadCloud, File, CheckCircle2, X, Loader2, Globe } from 'lucide-react';
-import { motion } from 'motion/react';
-import { useLocation } from 'react-router-dom';
+import { UploadCloud, File, CheckCircle2, X, Loader2, Globe, Home, Plus, FileCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -9,6 +9,7 @@ import { Textarea } from '../components/ui/Textarea';
 import { useConferences } from '../hooks/useConferences';
 
 export function Upload() {
+  const navigate = useNavigate();
   const location = useLocation();
   const conferenceFromQuery = new URLSearchParams(location.search).get('conference') ?? '';
   const { conferences, loading: conferencesLoading } = useConferences();
@@ -82,6 +83,26 @@ export function Upload() {
     }
   };
 
+  const resetForm = () => {
+    setFile(null);
+    setTitle('');
+    setAbstract('');
+    setKeywords('');
+    setSelectedAuthors([]);
+    setConferenceUrl('');
+    setIsUploading(false);
+    setUploadProgress(0);
+    setUploadSuccess(false);
+    setUploadError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleGoHome = () => {
+    navigate('/library');
+  };
+
   const addAuthor = (authorEmail: string) => {
     if (!authorEmail || selectedAuthors.includes(authorEmail)) {
       return;
@@ -148,17 +169,7 @@ export function Upload() {
       setUploadSuccess(true);
       setConferenceSource(data.meta?.conferenceSource || 'existing');
       
-      // Reset form after success
-      setTimeout(() => {
-        setFile(null);
-        setTitle('');
-        setAbstract('');
-        setKeywords('');
-        setSelectedAuthors([]);
-        setConferenceUrl('');
-        setIsUploading(false);
-        setUploadProgress(0);
-      }, 2000);
+      // Keep success state to show modal, don't auto-reset
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed');
       setIsUploading(false);
@@ -175,53 +186,104 @@ export function Upload() {
       </header>
 
       <div className="space-y-8">
-        {/* Drag & Drop Zone */}
-        <Card 
-          className={`border-2 border-dashed transition-colors ${
-            isDragging 
-              ? 'border-primary bg-primary/5' 
-              : 'border-outline-variant/50 bg-surface-container-lowest hover:bg-surface-container-low/50'
-          }`}
-        >
-          <CardContent className="p-12">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <div
-              className={`flex flex-col items-center justify-center text-center transition-all ${
-                isDragging ? 'scale-105' : ''
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
+        {/* Success Modal */}
+        <AnimatePresence>
+          {uploadSuccess && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             >
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                <UploadCloud className="w-10 h-10 text-primary" />
-              </div>
-              <h3 className="text-xl font-label font-semibold text-on-surface mb-2">
-                Drag & Drop your PDF here
-              </h3>
-              <p className="text-on-surface-variant mb-6">or click to browse from your computer</p>
-              <Button 
-                variant="outline" 
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
+              <motion.div 
+                initial={{ y: 20 }}
+                animate={{ y: 0 }}
+                className="bg-surface-container-lowest rounded-2xl p-8 max-w-md w-full shadow-2xl border border-outline-variant/30"
               >
-                Select File
-              </Button>
-              <p className="text-xs text-on-surface-variant mt-4">
-                Supported formats: PDF. Max size: 50MB.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="text-center">
+                  <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
+                    <FileCheck className="w-10 h-10 text-emerald-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-on-surface mb-2">
+                    Paper Uploaded Successfully!
+                  </h2>
+                  <p className="text-on-surface-variant mb-6">
+                    Your paper has been submitted for AI analysis and review.
+                    {conferenceSource === 'extracted' && ' Conference details were verified via AI.'}
+                    {conferenceSource === 'independent' && ' Categorized as Independent Research.'}
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      onClick={resetForm}
+                      className="w-full"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Upload Another Paper
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={handleGoHome}
+                      className="w-full"
+                    >
+                      <Home className="w-4 h-4 mr-2" />
+                      Go to Library
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* File Info & Upload Progress */}
-        {file && (
+        {/* Drag & Drop Zone - Hidden when file selected */}
+        {!file && !uploadSuccess && (
+          <Card 
+            className={`border-2 border-dashed transition-colors ${
+              isDragging 
+                ? 'border-primary bg-primary/5' 
+                : 'border-outline-variant/50 bg-surface-container-lowest hover:bg-surface-container-low/50'
+            }`}
+          >
+            <CardContent className="p-12">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <div
+                className={`flex flex-col items-center justify-center text-center transition-all ${
+                  isDragging ? 'scale-105' : ''
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                  <UploadCloud className="w-10 h-10 text-primary" />
+                </div>
+                <h3 className="text-xl font-label font-semibold text-on-surface mb-2">
+                  Drag & Drop your PDF here
+                </h3>
+                <p className="text-on-surface-variant mb-6">or click to browse from your computer</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  Select File
+                </Button>
+                <p className="text-xs text-on-surface-variant mt-4">
+                  Supported formats: PDF. Max size: 50MB.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Selected File Card - Shows when file is selected */}
+        {file && !uploadSuccess && (
           <Card className="border border-outline-variant/30 shadow-ambient">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -294,18 +356,6 @@ export function Upload() {
                 </div>
               )}
 
-              {uploadSuccess && (
-                <div className="p-4 bg-emerald-50 text-emerald-700 rounded-lg text-center">
-                  <p className="font-medium">Paper uploaded successfully!</p>
-                  {conferenceSource === 'extracted' && (
-                    <p className="text-sm mt-1">Conference details verified via AI.</p>
-                  )}
-                  {conferenceSource === 'independent' && (
-                    <p className="text-sm mt-1">Submitted as Independent Research.</p>
-                  )}
-                </div>
-              )}
-
               {uploadError && (
                 <div className="p-4 bg-red-50 text-red-700 rounded-lg text-center">
                   Error: {uploadError}
@@ -315,8 +365,9 @@ export function Upload() {
           </Card>
         )}
 
-        {/* Metadata Form */}
-        <Card className="border border-outline-variant/30">
+        {/* Metadata Form - Hidden when upload success */}
+        {!uploadSuccess && (
+          <Card className="border border-outline-variant/30">
           <CardHeader>
             <CardTitle>Paper Details</CardTitle>
             <CardDescription>Enter the details for your paper.</CardDescription>
@@ -441,6 +492,7 @@ export function Upload() {
             </div>
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );
