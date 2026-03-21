@@ -1,21 +1,26 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, CreateBucketCommand, HeadBucketCommand, PutBucketPolicyCommand, PutBucketAclCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, CreateBucketCommand, HeadBucketCommand, PutBucketPolicyCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 
-// Configure S3 client for MinIO
+// Detect storage provider
+const isR2 = process.env.STORAGE_ENDPOINT?.includes('r2.cloudflarestorage.com');
+const isMinIO = !isR2;
+
+// Configure S3 client
 const s3Client = new S3Client({
-  endpoint: process.env.STORAGE_USE_SSL === 'true'
-    ? `https://${process.env.STORAGE_ENDPOINT}:${process.env.STORAGE_PORT}`
-    : `http://${process.env.STORAGE_ENDPOINT}:${process.env.STORAGE_PORT}`,
-  region: 'us-east-1', // MinIO doesn't use regions, but SDK requires it
+  endpoint: isR2
+    ? process.env.STORAGE_ENDPOINT // R2: https://xxx.r2.cloudflarestorage.com
+    : `http${process.env.STORAGE_USE_SSL === 'true' ? 's' : ''}://${process.env.STORAGE_ENDPOINT}:${process.env.STORAGE_PORT}`,
+  region: isR2 ? 'auto' : 'us-east-1',
   credentials: {
     accessKeyId: process.env.STORAGE_ACCESS_KEY || 'minioadmin',
     secretAccessKey: process.env.STORAGE_SECRET_KEY || 'minioadmin',
   },
-  forcePathStyle: true, // Required for MinIO
+  forcePathStyle: isMinIO, // Required for MinIO, NOT for R2
 });
 
 const BUCKET = process.env.STORAGE_BUCKET || 'revio-papers';
+const PUBLIC_URL = process.env.STORAGE_PUBLIC_URL;
 
 // Bucket policy for public read access
 const BUCKET_POLICY = {
@@ -31,24 +36,22 @@ const BUCKET_POLICY = {
   ],
 };
 
-// Ensure bucket exists and is public
+// Ensure bucket exists
 async function ensureBucketExists() {
-  let bucketExists = false;
-  
   try {
     await s3Client.send(new HeadBucketCommand({ Bucket: BUCKET }));
-    bucketExists = true;
+    console.log(`[Storage] Bucket exists: ${BUCKET}`);
   } catch (error: any) {
     if (error.name === 'NotFound' || error.name === 'NoSuchBucket') {
-      // Create the bucket
       await s3Client.send(new CreateBucketCommand({ Bucket: BUCKET }));
       console.log(`[Storage] Created bucket: ${BUCKET}`);
     } else {
-      throw error;
+      console.error(`[Storage] Error checking bucket:`, error.message);
+      // Don't throw - R2 might have different error format
     }
   }
   
-  // Always ensure bucket policy is set (for existing buckets too)
+  // Try to set bucket policy (may fail on R2, that's OK)
   try {
     await s3Client.send(
       new PutBucketPolicyCommand({
@@ -56,22 +59,8 @@ async function ensureBucketExists() {
         Policy: JSON.stringify(BUCKET_POLICY),
       })
     );
-    
-    // Also set bucket ACL to public-read
-    await s3Client.send(
-      new PutBucketAclCommand({
-        Bucket: BUCKET,
-        ACL: 'public-read',
-      })
-    );
-    
-    if (bucketExists) {
-      console.log(`[Storage] Updated bucket policy for: ${BUCKET}`);
-    } else {
-      console.log(`[Storage] Set public read access for: ${BUCKET}`);
-    }
   } catch (policyError) {
-    console.warn(`[Storage] Could not set bucket policy:`, policyError);
+    console.log(`[Storage] Bucket policy not set (may not be supported)`);
   }
 }
 
@@ -86,7 +75,6 @@ export const storage = {
     originalName: string,
     contentType: string
   ): Promise<UploadResult> {
-    // Ensure bucket exists before uploading
     await ensureBucketExists();
     
     const key = `papers/${uuidv4()}-${originalName}`;
@@ -97,14 +85,26 @@ export const storage = {
         Key: key,
         Body: buffer,
         ContentType: contentType,
-        ACL: 'public-read',
       })
     );
 
-    // Build public URL
-    const protocol = process.env.STORAGE_USE_SSL === 'true' ? 'https' : 'http';
-    const url = `${protocol}://${process.env.STORAGE_ENDPOINT}:${process.env.STORAGE_PORT}/${BUCKET}/${key}`;
+    // Build public URL based on provider
+    let url: string;
+    if (isR2) {
+      // R2: Use custom public URL or construct from endpoint
+      if (PUBLIC_URL) {
+        url = `${PUBLIC_URL}/${key}`;
+      } else {
+        // R2 default: https://<account>.r2.cloudflarestorage.com/<bucket>/<key>
+        url = `${process.env.STORAGE_ENDPOINT}/${BUCKET}/${key}`;
+      }
+    } else {
+      // MinIO
+      const protocol = process.env.STORAGE_USE_SSL === 'true' ? 'https' : 'http';
+      url = `${protocol}://${process.env.STORAGE_ENDPOINT}:${process.env.STORAGE_PORT}/${BUCKET}/${key}`;
+    }
 
+    console.log(`[Storage] Uploaded: ${key} -> ${url.substring(0, 80)}...`);
     return { key, url };
   },
 
@@ -124,5 +124,6 @@ export const storage = {
         Key: key,
       })
     );
+    console.log(`[Storage] Deleted: ${key}`);
   },
 };
