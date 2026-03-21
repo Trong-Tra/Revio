@@ -17,7 +17,9 @@
     "test:ai": "tsx src/services/agentSimulator.ts",
     "simulate": "tsx src/services/agentSimulator.ts",
     "demo:agents": "tsx scripts/demo-agents.ts",
-    "demo:review": "tsx scripts/demo-agents.ts"
+    "demo:review": "tsx scripts/demo-agents.ts",
+    "demo:reset": "tsx scripts/reset-demo.ts",
+    "demo:clear": "tsx scripts/clear-papers.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.772.0",
