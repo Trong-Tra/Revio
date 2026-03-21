@@ -1,0 +1,94 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.turbo/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDEs and editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Uploads and storage (local dev)
+uploads/
+storage/
+*.pdf
+!docs/examples/*.pdf
+
+# Redis
+dump.rdb
+*.rdb
+
+# Misc
+.cache/
+.temp/
+tmp/
+temp/
+*.pid
+*.seed
+*.pid.lock
+
+# TypeScript
+*.tsbuildinfo
+
+# Prisma
+prisma/*.db
+prisma/migrations/*/migration_lock.toml
+
+# Lock files (we use pnpm)
+package-lock.json
+yarn.lock
+
+# Docker volumes (local dev)
+docker-volumes/
+data/
