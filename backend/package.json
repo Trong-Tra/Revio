@@ -15,7 +15,9 @@
     "test": "tsx src/tests/agent-flow.test.ts",
     "test:quick": "tsx src/tests/quick-test.ts",
     "test:ai": "tsx src/services/agentSimulator.ts",
-    "simulate": "tsx src/services/agentSimulator.ts"
+    "simulate": "tsx src/services/agentSimulator.ts",
+    "demo:agents": "tsx scripts/demo-agents.ts",
+    "demo:review": "tsx scripts/demo-agents.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.772.0",
