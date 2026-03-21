@@ -21,6 +21,9 @@ const uploadSchema = z.object({
   conferenceUrl: z.string().optional(), // New: URL for TinyFish to scrape
 });
 
+// HACKATHON MVP: Max 10 papers limit
+const MAX_PAPERS = 10;
+
 // Upload paper with PDF (requires authentication)
 router.post('/',
   requireAuth,
@@ -33,6 +36,17 @@ router.post('/',
     }
     
     const userId = req.userId;
+
+    // HACKATHON: Check paper limit
+    const paperCount = await prisma.paper.count();
+    if (paperCount >= MAX_PAPERS) {
+      const error = new Error(
+        `Hackathon MVP limit: Maximum ${MAX_PAPERS} papers allowed. ` +
+        `Please delete an existing paper before uploading.`
+      );
+      (error as any).statusCode = 403;
+      throw error;
+    }
 
     // Parse and validate metadata
     const validated = uploadSchema.parse(req.body);

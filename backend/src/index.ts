@@ -13,6 +13,7 @@ import { authRouter } from './routes/auth.js';
 import { conferencesRouter } from './routes/conferences.js';
 import synthesisRouter from './routes/synthesis.js';
 import { errorHandler } from './middleware/error-handler.js';
+import { prisma } from './lib/prisma.js';
 
 dotenv.config();
 
@@ -69,9 +70,19 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check - includes hackathon MVP info
+app.get('/health', async (_req, res) => {
+  const paperCount = await prisma.paper.count();
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    hackathon: {
+      maxPapers: 10,
+      currentPapers: paperCount,
+      remaining: Math.max(0, 10 - paperCount),
+      storage: 'R2'
+    }
+  });
 });
 
 // API Routes
