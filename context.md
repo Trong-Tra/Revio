@@ -40,7 +40,6 @@ A dual-track system where both AI-driven insights and human expertise coexist.
 |-------|------|-------------|
 | `id` | UUID | Review identifier |
 | `paper_id` | UUID | Reference to paper |
-| `reviewer_type` | Enum (AI/Human) | Type of reviewer |
 | `content` | JSON | Structured review data |
 | `is_accepted` | Boolean | Acceptance decision |
 | `created_at` | Timestamp | Review date |

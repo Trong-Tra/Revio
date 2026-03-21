@@ -1,5 +1,4 @@
 export { useAuth } from './useAuth';
-export type { useAuth } from './useAuth';
-
+export { usePapers, usePaper } from './usePapers';
 export { useUserPapers } from './useUserPapers';
-export type { Paper } from './useUserPapers';
+export { useAgents, useAgent } from './useAgents';

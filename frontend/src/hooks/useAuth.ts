@@ -1,28 +1,20 @@
 import { useState, useCallback, useEffect } from 'react';
+import { authApi, type User } from '../api/client';
 
 const AUTH_CHANGED_EVENT = 'auth-changed';
 
-interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-  orcidId?: string;
-  affiliation?: string;
-  avatar?: string;
-}
-
 interface AuthContextType {
-  user: AuthUser | null;
+  user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (data: Partial<AuthUser>) => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
 // Initialize from localStorage or null
-const getInitialUser = (): AuthUser | null => {
+const getInitialUser = (): User | null => {
   if (typeof window === 'undefined') return null;
   try {
     const stored = localStorage.getItem('auth_user');
@@ -33,7 +25,7 @@ const getInitialUser = (): AuthUser | null => {
 };
 
 export const useAuth = (): AuthContextType => {
-  const [user, setUser] = useState<AuthUser | null>(getInitialUser());
+  const [user, setUser] = useState<User | null>(getInitialUser());
   const [isLoading, setIsLoading] = useState(false);
 
   // Keep auth state in sync across components and tabs.
@@ -55,26 +47,14 @@ export const useAuth = (): AuthContextType => {
   const signIn = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/signin', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password }),
-      // });
-      // const data = await response.json();
-
-      // Mock authentication
-      const mockUser: AuthUser = {
-        id: 'user_' + Math.random().toString(36).substr(2, 9),
-        email,
-        name: email.split('@')[0],
-        affiliation: 'Your Institution',
-      };
-
-      localStorage.setItem('auth_user', JSON.stringify(mockUser));
-      localStorage.setItem('auth_token', 'token_' + Math.random().toString(36).substr(2, 20));
-      setUser(mockUser);
+      const response = await authApi.signIn(email, password);
+      
+      localStorage.setItem('auth_user', JSON.stringify(response.user));
+      localStorage.setItem('auth_token', response.token);
+      setUser(response.user);
       window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
+    } catch (err) {
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -83,26 +63,14 @@ export const useAuth = (): AuthContextType => {
   const signUp = useCallback(async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/signup', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ name, email, password }),
-      // });
-      // const data = await response.json();
-
-      // Mock registration
-      const mockUser: AuthUser = {
-        id: 'user_' + Math.random().toString(36).substr(2, 9),
-        email,
-        name,
-        affiliation: '',
-      };
-
-      localStorage.setItem('auth_user', JSON.stringify(mockUser));
-      localStorage.setItem('auth_token', 'token_' + Math.random().toString(36).substr(2, 20));
-      setUser(mockUser);
+      const response = await authApi.signUp(name, email, password);
+      
+      localStorage.setItem('auth_user', JSON.stringify(response.user));
+      localStorage.setItem('auth_token', response.token);
+      setUser(response.user);
       window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
+    } catch (err) {
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -111,9 +79,7 @@ export const useAuth = (): AuthContextType => {
   const signOut = useCallback(async () => {
     setIsLoading(true);
     try {
-      // TODO: Call logout API
-      localStorage.removeItem('auth_user');
-      localStorage.removeItem('auth_token');
+      await authApi.signOut();
       setUser(null);
       window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
     } finally {
@@ -121,27 +87,19 @@ export const useAuth = (): AuthContextType => {
     }
   }, []);
 
-  const updateProfile = useCallback(async (data: Partial<AuthUser>) => {
+  const updateProfile = useCallback(async (data: Partial<User>) => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/user/profile', {
-      //   method: 'PATCH',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-      //   },
-      //   body: JSON.stringify(data),
-      // });
-
-      const updatedUser = { ...user, ...data } as AuthUser;
+      const updatedUser = await authApi.updateProfile(data);
       localStorage.setItem('auth_user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
+    } catch (err) {
+      throw err;
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, []);
 
   return {
     user,

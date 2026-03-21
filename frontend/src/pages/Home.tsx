@@ -2,12 +2,16 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { premiumEase } from "../lib/animations";
+import { usePapers } from "../hooks/usePapers";
 
 export function Home() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("hero");
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   const [paperQuery, setPaperQuery] = useState("");
+
+  // Fetch real papers from API
+  const { papers: apiPapers, loading, error } = usePapers({ search: paperQuery || undefined });
 
   const sections = useMemo(
     () => [
@@ -18,37 +22,17 @@ export function Home() {
     []
   );
 
-  const papers = useMemo(
-    () => [
-      {
-        id: 1,
-        title: "Latent Space Alignment in Large Multimodal Systems",
-        description: "Exploring convergence of latent representations between vision and language models.",
-        confidence: "98%",
-      },
-      {
-        id: 2,
-        title: "Algorithmic Transparency in Decentralized Governance",
-        description: "Investigating automated voting protocols and minority participation in DAO governance.",
-        confidence: "94%",
-      },
-      {
-        id: 3,
-        title: "Low-Latency Inference in Heterogeneous Edge Clusters",
-        description: "A scheduling approach for model parallelization across constrained IoT devices.",
-        confidence: "91%",
-      },
-    ],
-    []
-  );
-
-  const filteredPapers = useMemo(() => {
-    const q = paperQuery.trim().toLowerCase();
-    if (!q) return papers;
-    return papers.filter((paper) => {
-      return paper.title.toLowerCase().includes(q) || paper.description.toLowerCase().includes(q);
-    });
-  }, [paperQuery, papers]);
+  // Transform API papers to display format
+  const papers = useMemo(() => {
+    return apiPapers.map(paper => ({
+      id: paper.id,
+      title: paper.title,
+      description: paper.abstract.slice(0, 120) + (paper.abstract.length > 120 ? '...' : ''),
+      confidence: paper.confidence || `${Math.round((paper.aiScore || 0.85) * 100)}%`,
+      authors: paper.authors,
+      keywords: paper.keywords,
+    }));
+  }, [apiPapers]);
 
   const onSectionInView = (id: string) => {
     setActiveSection(id);
@@ -197,32 +181,44 @@ export function Home() {
                 </div>
 
                 <div className="flex gap-6 overflow-x-auto pb-4">
-                  {filteredPapers.map((paper) => (
-                    <article
-                      key={paper.id}
-                      className="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer flex-shrink-0 w-80"
-                      onClick={() => navigate(`/paper/${paper.id}`)}
-                    >
-                      <div className="h-48 bg-surface-container" />
-                      <div className="p-6 flex flex-col flex-1">
-                        <div className="flex gap-2 mb-3">
-                          <span className="bg-surface-container-low px-2 py-0.5 rounded text-[10px] font-label font-bold text-primary uppercase tracking-wider">Research</span>
-                          <span className="bg-surface-container-low px-2 py-0.5 rounded text-[10px] font-label font-bold text-primary uppercase tracking-wider">AI</span>
-                        </div>
-                        <h3 className="text-xl font-headline font-bold leading-tight mb-2 group-hover:text-primary transition-colors">{paper.title}</h3>
-                        <p className="text-sm text-on-surface-variant mb-4">{paper.description}</p>
-                        <div className="mt-auto pt-4 border-t border-outline-variant/20 flex items-center justify-between">
-                          <span className="text-[10px] font-label font-bold text-outline">AI Confidence {paper.confidence}</span>
-                          <span className="material-symbols-outlined text-on-surface-variant hover:text-primary">arrow_forward</span>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                  {filteredPapers.length === 0 && (
+                  {loading ? (
+                    <div className="w-full bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/30 text-center">
+                      <p className="font-label text-sm font-semibold text-on-surface">Loading papers...</p>
+                    </div>
+                  ) : error ? (
+                    <div className="w-full bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/30 text-center">
+                      <p className="font-label text-sm font-semibold text-on-surface">Error loading papers</p>
+                      <p className="text-sm text-on-surface-variant mt-2">{error}</p>
+                    </div>
+                  ) : papers.length === 0 ? (
                     <div className="w-full bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/30 text-center">
                       <p className="font-label text-sm font-semibold text-on-surface">No papers found</p>
                       <p className="text-sm text-on-surface-variant mt-2">Try another title keyword.</p>
                     </div>
+                  ) : (
+                    papers.map((paper) => (
+                      <article
+                        key={paper.id}
+                        className="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer flex-shrink-0 w-80"
+                        onClick={() => navigate(`/paper/${paper.id}`)}
+                      >
+                        <div className="h-48 bg-surface-container" />
+                        <div className="p-6 flex flex-col flex-1">
+                          <div className="flex gap-2 mb-3">
+                            <span className="bg-surface-container-low px-2 py-0.5 rounded text-[10px] font-label font-bold text-primary uppercase tracking-wider">Research</span>
+                            {paper.keywords?.slice(0, 1).map(k => (
+                              <span key={k} className="bg-surface-container-low px-2 py-0.5 rounded text-[10px] font-label font-bold text-primary uppercase tracking-wider">{k}</span>
+                            ))}
+                          </div>
+                          <h3 className="text-xl font-headline font-bold leading-tight mb-2 group-hover:text-primary transition-colors">{paper.title}</h3>
+                          <p className="text-sm text-on-surface-variant mb-4">{paper.description}</p>
+                          <div className="mt-auto pt-4 border-t border-outline-variant/20 flex items-center justify-between">
+                            <span className="text-[10px] font-label font-bold text-outline">AI Confidence {paper.confidence}</span>
+                            <span className="material-symbols-outlined text-on-surface-variant hover:text-primary">arrow_forward</span>
+                          </div>
+                        </div>
+                      </article>
+                    ))
                   )}
                 </div>
               </div>
