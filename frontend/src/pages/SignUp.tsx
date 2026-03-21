@@ -54,7 +54,7 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
           <div className="space-y-4">
             <span className="font-label text-primary font-medium tracking-widest uppercase text-xs">Access Protocol v4.2</span>
             <h1 className="text-5xl lg:text-7xl font-headline font-extrabold tracking-tighter text-on-surface leading-[0.9]">
-              The <span className="bg-gradient-to-br from-primary to-primary-container bg-clip-text text-transparent">Digital</span><br/>Atelier.
+              <span className="bg-gradient-to-br from-primary to-primary-container bg-clip-text">Revio</span><span className="bg-gradient-to-br from-primary to-primary-container bg-clip-text text-transparent">.</span>
             </h1>
           </div>
           <p className="text-on-surface-variant text-lg lg:text-xl font-light leading-relaxed max-w-md">
@@ -86,6 +86,7 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
+              className="p-8 lg:p-12"
             >
               <div className="mb-10 text-center lg:text-left">
                 <div className="mb-4">
@@ -95,7 +96,7 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                 <p className="font-label text-sm text-on-surface-variant tracking-normal">Please enter your authorized credentials.</p>
               </div>
 
-              <div className="p-8 lg:p-12">
+              <div>
                 <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
                   {authError && (
                     <motion.div

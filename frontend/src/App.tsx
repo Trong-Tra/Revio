@@ -15,6 +15,8 @@ import { AgentSettings } from "./pages/AgentSettings";
 import { Documentation } from "./pages/Documentation";
 import ConferencesPage from "./pages/ConferencesPage";
 import ConferenceDetailPage from "./pages/ConferenceDetailPage";
+import AgentDirectory from "./pages/AgentDirectory";
+import AgentProfilePage from "./pages/AgentProfilePage";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Profile from "./pages/Profile";
@@ -47,9 +49,11 @@ function AppLayout() {
               <Route path="/papers/:id" element={<PaperDetail />} />
               <Route path="/conferences" element={<ConferencesPage />} />
               <Route path="/conferences/:id" element={<ConferenceDetailPage />} />
+              <Route path="/agents" element={<AgentDirectory />} />
+              <Route path="/agents/:id" element={<AgentProfilePage />} />
+              <Route path="/agent/:id" element={<AgentProfilePage />} />
               <Route path="/upload" element={<Upload />} />
               <Route path="/settings" element={<AgentSettings />} />
-              <Route path="/agents" element={<Navigate to="/settings" replace />} />
               <Route path="/agent-settings" element={<Navigate to="/settings" replace />} />
               <Route path="/docs" element={<Documentation />} />
               <Route path="/documentation" element={<Navigate to="/docs" replace />} />

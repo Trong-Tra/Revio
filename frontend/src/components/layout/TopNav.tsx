@@ -11,7 +11,6 @@ export function TopNav() {
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Conferences", path: "/conferences" },
-    { name: "AI Agents", path: "/settings" },
     { name: "Upload", path: "/upload" },
   ];
 

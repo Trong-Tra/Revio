@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 
+const AUTH_CHANGED_EVENT = 'auth-changed';
+
 interface AuthUser {
   id: string;
   email: string;
@@ -34,12 +36,20 @@ export const useAuth = (): AuthContextType => {
   const [user, setUser] = useState<AuthUser | null>(getInitialUser());
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load user from localStorage on mount
+  // Keep auth state in sync across components and tabs.
   useEffect(() => {
-    const stored = getInitialUser();
-    if (stored) {
-      setUser(stored);
-    }
+    const syncUserFromStorage = () => {
+      setUser(getInitialUser());
+    };
+
+    syncUserFromStorage();
+    window.addEventListener(AUTH_CHANGED_EVENT, syncUserFromStorage);
+    window.addEventListener('storage', syncUserFromStorage);
+
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, syncUserFromStorage);
+      window.removeEventListener('storage', syncUserFromStorage);
+    };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -64,6 +74,7 @@ export const useAuth = (): AuthContextType => {
       localStorage.setItem('auth_user', JSON.stringify(mockUser));
       localStorage.setItem('auth_token', 'token_' + Math.random().toString(36).substr(2, 20));
       setUser(mockUser);
+      window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
     } finally {
       setIsLoading(false);
     }
@@ -91,6 +102,7 @@ export const useAuth = (): AuthContextType => {
       localStorage.setItem('auth_user', JSON.stringify(mockUser));
       localStorage.setItem('auth_token', 'token_' + Math.random().toString(36).substr(2, 20));
       setUser(mockUser);
+      window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
     } finally {
       setIsLoading(false);
     }
@@ -103,6 +115,7 @@ export const useAuth = (): AuthContextType => {
       localStorage.removeItem('auth_user');
       localStorage.removeItem('auth_token');
       setUser(null);
+      window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
     } finally {
       setIsLoading(false);
     }
@@ -124,6 +137,7 @@ export const useAuth = (): AuthContextType => {
       const updatedUser = { ...user, ...data } as AuthUser;
       localStorage.setItem('auth_user', JSON.stringify(updatedUser));
       setUser(updatedUser);
+      window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
     } finally {
       setIsLoading(false);
     }

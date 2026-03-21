@@ -71,7 +71,7 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                 )}
 
                 <div className="space-y-2">
-                  <label className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant" htmlFor="email">Institutional Email</label>
+                  <label className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant" htmlFor="email">Email</label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors w-5 h-5" />
                     <input 
@@ -89,21 +89,21 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                       }`}
                       placeholder="researcher@university.edu" 
                     />
-                    {errors.email && (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-red-500 text-xs mt-1 block"
-                      >
-                        {errors.email.message}
-                      </motion.span>
-                    )}
                   </div>
+                  {errors.email && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-red-500 text-xs mt-1 block"
+                    >
+                      {errors.email.message}
+                    </motion.span>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <label className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant" htmlFor="password">Security Key</label>
+                    <label className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant" htmlFor="password">Password</label>
                     <button type="button" className="font-label text-[10px] uppercase tracking-wider text-primary hover:underline decoration-primary/30 underline-offset-4">Forgot Password?</button>
                   </div>
                   <div className="relative group">
@@ -123,16 +123,16 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                       }`}
                       placeholder="••••••••" 
                     />
-                    {errors.password && (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-red-500 text-xs mt-1 block"
-                      >
-                        {errors.password.message}
-                      </motion.span>
-                    )}
                   </div>
+                  {errors.password && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-red-500 text-xs mt-1 block"
+                    >
+                      {errors.password.message}
+                    </motion.span>
+                  )}
                 </div>
 
                 <div className="pt-2">
