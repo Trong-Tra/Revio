@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { userPapersApi, type Paper, type Review } from '../api/client';
 
+export type { Paper, Review };
+
 interface UseUserPapersReturn {
   papers: Paper[];
   reviews: Review[];

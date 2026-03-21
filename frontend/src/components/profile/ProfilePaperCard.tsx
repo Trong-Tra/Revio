@@ -1,25 +1,25 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Edit3, MoreHorizontal, ArrowRight } from 'lucide-react';
-import { Paper } from '../../hooks/useUserPapers';
+import type { Paper } from '../../api/client';
 
 interface ProfilePaperCardProps {
   paper: Paper;
   onViewDetails: (paperId: string) => void;
 }
 
-const statusConfig = {
-  published: {
+const statusConfig: Record<string, { bgColor: string; textColor: string; label: string }> = {
+  COMPLETED: {
     bgColor: 'bg-primary/10',
     textColor: 'text-primary',
-    label: 'Published',
+    label: 'Completed',
   },
-  under_review: {
+  UNDER_REVIEW: {
     bgColor: 'bg-amber-500/10',
     textColor: 'text-amber-700',
     label: 'Under Review',
   },
-  draft: {
+  PENDING: {
     bgColor: 'bg-surface-container-high',
     textColor: 'text-on-surface-variant',
     label: 'Draft',
@@ -27,7 +27,7 @@ const statusConfig = {
 };
 
 export const ProfilePaperCard: React.FC<ProfilePaperCardProps> = ({ paper, onViewDetails }) => {
-  const config = statusConfig[paper.status];
+  const config = statusConfig[paper.status] || statusConfig.PENDING;
 
   return (
     <motion.div
@@ -45,7 +45,7 @@ export const ProfilePaperCard: React.FC<ProfilePaperCardProps> = ({ paper, onVie
               {config.label}
             </span>
             <span className="bg-surface-container text-on-surface-variant px-2.5 py-1 rounded text-[10px] font-label font-bold uppercase tracking-widest">
-              {paper.category}
+              {paper.field}
             </span>
           </div>
           <button className="text-outline-variant hover:text-primary transition-colors">
@@ -65,16 +65,16 @@ export const ProfilePaperCard: React.FC<ProfilePaperCardProps> = ({ paper, onVie
       <div className="pt-4 border-t border-outline-variant/20 flex items-center justify-between mt-auto">
         <div className="flex flex-col">
           <span className="font-label text-[10px] uppercase text-outline-variant">
-            {paper.status === 'draft' ? 'Modified' : paper.status === 'under_review' ? 'Updated' : 'Date'}
+            {paper.status === 'PENDING' ? 'Created' : 'Updated'}
           </span>
-          <span className="text-xs font-medium font-mono">{paper.datePublished}</span>
+          <span className="text-xs font-medium font-mono">{paper.date}</span>
         </div>
         <button
           onClick={() => onViewDetails(paper.id)}
           className="flex items-center gap-1 text-primary font-bold text-xs hover:underline underline-offset-4"
         >
-          {paper.status === 'draft' ? 'Edit Draft' : paper.status === 'under_review' ? 'Details' : 'Full Manuscript'}
-          {paper.status === 'draft' ? (
+          {paper.status === 'PENDING' ? 'Edit Draft' : paper.status === 'UNDER_REVIEW' ? 'Details' : 'Full Manuscript'}
+          {paper.status === 'PENDING' ? (
             <Edit3 className="w-3 h-3" />
           ) : (
             <ArrowRight className="w-3 h-3" />
