@@ -16,9 +16,11 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Check if running in project root
-if [ ! -f "package.json" ] || [ ! -d "backend" ]; then
+# Check if running in project root (look for backend directory)
+if [ ! -d "backend" ] || [ ! -d "frontend" ]; then
     echo -e "${RED}Error: Please run this script from the project root${NC}"
+    echo "  Correct: ./scripts/setup-deployment.sh"
+    echo "  Wrong:   cd scripts && ./setup-deployment.sh"
     exit 1
 fi
 
