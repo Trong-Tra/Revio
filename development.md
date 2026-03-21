@@ -1,195 +1,292 @@
 # Revio: Development Plan & Timeline
 
-> **Agent Protocol**: Update this file after EVERY significant task. Track progress, blockers, and timeline adjustments here.
+> **Building the Qualification Engine for AI-Assisted Peer Review**
+
+---
+
+## 🎯 Current Status
+
+| Phase | Status | Key Deliverables |
+|-------|--------|------------------|
+| Foundation | ✅ Complete | Backend API, Frontend UI, Database, File upload |
+| Real Data | ✅ Complete | IEEE papers with reviews seeded |
+| Skill Governance | ✅ Complete | Agent skill definitions (SKILL.md, etc.) |
+| **Qualification Engine** | 🔨 **CURRENT** | **The core innovation - matching & access control** |
+| Production | ⏳ Pending | Deployment, monitoring, scaling |
 
 ---
 
 ## 📅 Project Timeline
 
-### Phase 0: Frontend Foundation ✅ COMPLETE
-**Goal**: Frontend UI implementation
+### Phase 1: Foundation (Week 1-2) ✅ COMPLETE
+**Goal**: Core infrastructure
 
-| Task | Status | Owner | Notes |
-|------|--------|-------|-------|
-| Vite + React 19 setup | ✅ Done | - | Port 3000 |
-| Tailwind v4 theming | ✅ Done | - | Custom color tokens |
-| Page routing | ✅ Done | - | Home, Paper, Upload, Settings, Docs |
-| UI component library | ✅ Done | - | Button, Card, Input, Badge, Textarea |
-| Mock data displays | ✅ Done | - | Static paper/review data |
-
----
-
-### Phase 1: Backend API (Week 1-2) 🔨 CURRENT
-**Goal**: Core API to serve frontend data needs
-
-| Task | Status | Owner | Notes |
-|------|--------|-------|-------|
-| Backend project setup | ✅ Done | - | Express + TypeScript |
-| Database schema (Prisma) | ✅ Done | - | Papers, Reviews, AgentConfigs, Users |
-| Docker Compose stack | ✅ Done | - | Postgres + Redis + MinIO |
-| Environment configuration | ✅ Done | - | .env.example provided |
-| Papers API | ✅ Done | - | CRUD + list with filters + search |
-| File upload/download | ✅ Done | - | Multer + MinIO storage |
-| Reviews API | ✅ Done | - | AI + Human review endpoints |
-| Agent Config API | ✅ Done | - | CRUD + versioning + activation |
-| Search endpoint | ✅ Done | - | Query + filters + trending keywords |
-| Database seed script | ✅ Done | - | Sample data for development |
-
-**Milestone Definition of Done**:
-- [x] Backend API serves paper data to frontend
-- [x] Can upload paper (PDF + metadata)
-- [x] Can view paper list with pagination
-- [x] Can view paper details with reviews
-- [x] Search works with text queries
-- [x] All services run via `docker-compose up`
+| Task | Status | Notes |
+|------|--------|-------|
+| Backend API (Express + Prisma) | ✅ Done | Full CRUD, file upload, search |
+| Frontend (React + Vite) | ✅ Done | Modern UI with animations |
+| Database schema | ✅ Done | Papers, Reviews, AgentConfigs, Users |
+| Docker stack | ✅ Done | Postgres + Redis + MinIO |
+| File upload to MinIO | ✅ Done | PDF storage working |
 
 ---
 
-### Phase 2: Review System (Week 3) 📝
-**Goal**: Human and AI review capabilities
+### Phase 2: Real Data & Skills (Week 3) ✅ COMPLETE
+**Goal**: Seed with real content and agent governance
 
-| Task | Status | Owner | Notes |
-|------|--------|-------|-------|
-| Reviews table & API | ✅ Done | - | CRUD operations |
-| Human review submission UI | ⏳ Pending | - | Form with validation |
-| AI agent worker setup | ⏳ Pending | - | BullMQ processor |
-| AgentConfig management API | ✅ Done | - | CRUD for agent configs |
-| Basic AI review generation | ⏳ Pending | - | OpenAI integration |
-| Review comparison view | ⏳ Pending | - | Side-by-side UI |
-| **Agent Skill Governance** | ✅ Done | - | SKILL.md, REVIEW.md, FIELDS.md, ETHICS.md |
-
-**Milestone Definition of Done**:
-- [ ] Human can submit a review
-- [ ] AI can generate a review (async)
-- [ ] Can compare AI vs Human reviews
+| Task | Status | Notes |
+|------|--------|-------|
+| Seed real papers | ✅ Done | Lotus Bridge, Proof-of-Merit with IEEE reviews |
+| Agent skill files | ✅ Done | SKILL.md, REVIEW.md, FIELDS.md, ETHICS.md |
+| Frontend-backend integration | ✅ Done | API client, hooks wired |
+| Agent directory UI | ✅ Done | Browse agents page |
 
 ---
 
-### Phase 3: Discovery & Search (Week 4) 🔍
-**Goal**: Powerful search and recommendation
+### Phase 3: The Qualification Engine (Week 4-5) 🔨 CURRENT
+**Goal**: Build the core differentiator - matching & access control
 
-| Task | Status | Owner | Notes |
-|------|--------|-------|-------|
-| Meilisearch integration | ⏳ Pending | - | Index papers |
-| Full-text search API | ⏳ Pending | - | Search endpoints |
-| Advanced filters UI | ⏳ Pending | - | Field, date, author |
-| Keyword extraction from papers | ⏳ Pending | - | NLP processing |
-| Trending papers algorithm | ⏳ Pending | - | Based on reviews |
+#### 3.1 Skill Extraction System
+| Task | Status | Notes |
+|------|--------|-------|
+| Paper skill extraction API | ⏳ Pending | NLP to extract skills from abstract/content |
+| Keyword-to-skill mapping | ⏳ Pending | Normalize extracted terms to skill taxonomy |
+| Conference skill override | ⏳ Pending | Allow conferences to set required skills |
+| Skill confidence scoring | ⏳ Pending | How confident are we in extraction? |
 
-**Milestone Definition of Done**:
-- [ ] Search returns relevant results in < 100ms
-- [ ] Filters work in combination
-- [ ] Trending section on homepage
+#### 3.2 Agent Skill Management
+| Task | Status | Notes |
+|------|--------|-------|
+| Agent skill declaration | ⏳ Pending | Agents declare skills with levels |
+| Skill verification system | ⏳ Pending | Validate skills through review history |
+| Skill level progression | ⏳ Pending | NOVICE → PROFICIENT → EXPERT |
+
+#### 3.3 The Matching Algorithm ⭐ CRITICAL
+| Task | Status | Notes |
+|------|--------|-------|
+| Skill matching engine | ⏳ Pending | Calculate match % between paper & agent |
+| Match scoring algorithm | ⏳ Pending | Weighted scoring for partial matches |
+| Match threshold config | ⏳ Pending | Min match % for qualification |
+| Multiple skill handling | ⏳ Pending | AND vs OR logic for required skills |
+
+**Algorithm sketch:**
+```typescript
+function calculateMatch(
+  paperSkills: string[],
+  agentSkills: AgentSkill[]
+): MatchResult {
+  const required = paperSkills;
+  const has = agentSkills.filter(s => s.level !== 'NOVICE').map(s => s.name);
+  
+  const matched = required.filter(r => has.includes(r));
+  const missing = required.filter(r => !has.includes(r));
+  
+  const score = matched.length / required.length;
+  
+  return {
+    score,
+    matched,
+    missing,
+    qualified: score >= 0.5, // Configurable threshold
+  };
+}
+```
+
+#### 3.4 Reputation & Tier System ⭐ CRITICAL
+| Task | Status | Notes |
+|------|--------|-------|
+| Reputation tracking | ⏳ Pending | Review count, accuracy, helpfulness |
+| Tier definitions | ⏳ Pending | ENTRY → STANDARD → PREMIUM → ELITE |
+| Tier requirements | ⏳ Pending | Reputation thresholds for each tier |
+| Accuracy measurement | ⏳ Pending | Compare agent review to final decision |
+| Helpfulness ratings | ⏳ Pending | Humans rate agent review usefulness |
+
+**Tier Requirements:**
+| Tier | Review Count | Accuracy | Other |
+|------|--------------|----------|-------|
+| ENTRY | 0 | - | Just register |
+| STANDARD | 10 | 80% | 5+ skill matches |
+| PREMIUM | 50 | 90% | Expert in 3+ skills |
+| ELITE | 200 | 95% | Verified expert, 10+ premium reviews |
+
+#### 3.5 Access Control Gates ⭐ CRITICAL
+| Task | Status | Notes |
+|------|--------|-------|
+| Tier-based access | ⏳ Pending | Check agent tier vs paper tier |
+| Skill-based access | ⏳ Pending | Check skill match % |
+| Weekly review limits | ⏳ Pending | Rate limiting per tier |
+| Paper assignment logic | ⏳ Pending | Match papers to qualified agents |
+
+**Access Check:**
+```typescript
+function canReview(agent: Agent, paper: Paper): AccessResult {
+  // 1. Check tier
+  if (agent.reputation.tier < paper.tier) {
+    return { allowed: false, reason: 'Insufficient tier' };
+  }
+  
+  // 2. Check skills
+  const match = calculateMatch(paper.requiredSkills, agent.skills);
+  if (!match.qualified) {
+    return { allowed: false, reason: 'Skills mismatch', match };
+  }
+  
+  // 3. Check rate limit
+  if (agent.reviewsThisWeek >= agent.tierLimit) {
+    return { allowed: false, reason: 'Weekly limit reached' };
+  }
+  
+  return { allowed: true, match };
+}
+```
+
+#### 3.6 Agent Council Formation
+| Task | Status | Notes |
+|------|--------|-------|
+| Council assignment API | ⏳ Pending | Assign N agents to paper |
+| Ranking qualified agents | ⏳ Pending | By match score + reputation |
+| Consensus aggregation | ⏳ Pending | Combine multiple agent reviews |
+| Conflict resolution | ⏳ Pending | Handle divergent agent opinions |
+
+**Council Formation:**
+```typescript
+async function formCouncil(paper: Paper, size: number = 3): Promise<Agent[]> {
+  // 1. Get all qualified agents
+  const qualified = await getQualifiedAgents(paper);
+  
+  // 2. Rank by (match_score * 0.6 + reputation * 0.4)
+  const ranked = qualified.sort((a, b) => 
+    calculateRankingScore(b) - calculateRankingScore(a)
+  );
+  
+  // 3. Return top N
+  return ranked.slice(0, size);
+}
+```
+
+**Milestone Definition of Done:**
+- [ ] Paper skills auto-extracted on upload
+- [ ] Agents declare and verify skills
+- [ ] Matching algorithm returns match scores
+- [ ] Tier system gates paper access
+- [ ] Agent councils auto-form for papers
+- [ ] Reputation updates based on review accuracy
 
 ---
 
-### Phase 4: Agent Intelligence (Week 5) 🤖
-**Goal**: Sophisticated AI agent capabilities
+### Phase 4: Human Integration (Week 6)
+**Goal**: Complete the human-in-the-loop experience
 
-| Task | Status | Owner | Notes |
-|------|--------|-------|-------|
-| Chain-of-thought prompting | ⏳ Pending | - | Structured reasoning |
-| Anti-hallucination measures | ⏳ Pending | - | Grounding checks |
-| Tone configuration implementation | ⏳ Pending | - | Critical/Encouraging/Academic |
-| PDF text extraction pipeline | ⏳ Pending | - | pdf-parse integration |
-| Agent versioning system | ⏳ Pending | - | Config versions |
-| Review quality scoring | ⏳ Pending | - | Confidence metrics |
-
-**Milestone Definition of Done**:
-- [ ] AI reviews include reasoning steps
-- [ ] No hallucinated citations in reviews
-- [ ] Different tones produce noticeably different outputs
+| Task | Status | Notes |
+|------|--------|-------|
+| Human review submission | ⏳ Pending | Form to submit human review |
+| Agent council display | ⏳ Pending | Show all agent reviews to human |
+| Consensus visualization | ⏳ Pending | Graphs of agent agreement |
+| Helpfulness rating | ⏳ Pending | Human rates each agent review |
+| Review comparison | ⏳ Pending | Side-by-side agent vs human |
 
 ---
 
-### Phase 5: Polish & Deployment (Week 6) 🚀
-**Goal**: Production-ready platform
+### Phase 5: Production & Polish (Week 7)
+**Goal**: Deploy and scale
 
-| Task | Status | Owner | Notes |
-|------|--------|-------|-------|
-| Authentication & authorization | ⏳ Pending | - | JWT + roles |
-| API rate limiting | ⏳ Pending | - | Redis-based |
-| Frontend optimization | ⏳ Pending | - | Lighthouse 90+ |
-| CI/CD pipeline | ⏳ Pending | - | GitHub Actions |
-| Production deployment | ⏳ Pending | - | VPS/Cloud |
-| Documentation | ⏳ Pending | - | API docs + user guide |
-| Monitoring setup | ⏳ Pending | - | Prometheus + Grafana |
-
-**Milestone Definition of Done**:
-- [ ] Platform publicly accessible
-- [ ] API documentation complete
-- [ ] Monitoring dashboards active
+| Task | Status | Notes |
+|------|--------|-------|
+| Frontend deployment | ⏳ Pending | Vercel |
+| Backend deployment | ⏳ Pending | Railway/Render/Fly |
+| Database migration | ⏳ Pending | Production Postgres |
+| Monitoring | ⏳ Pending | Logs, metrics, alerts |
+| Documentation | ⏳ Pending | API docs, user guides |
 
 ---
 
-## 🎯 Current Sprint Focus
+## 🏗️ Architecture Decisions
 
-### Sprint 1: Foundation Setup
-**Dates**: 2026-03-21 → 2026-03-28
+### Skill Taxonomy
+Use hierarchical skills:
+```
+computer-science/
+  ├── blockchain/
+  │   ├── consensus-mechanisms
+  │   ├── smart-contracts
+  │   └── zero-knowledge-proofs
+  ├── machine-learning/
+  │   ├── transformers
+  │   ├── reinforcement-learning
+  │   └── federated-learning
+  └── distributed-systems/
+      ├── p2p-networks
+      ├── byzantine-fault-tolerance
+      └── sharding
+```
 
-#### Today's Priorities (2026-03-21)
-1. ✅ Create project documentation (context.md, skills, development.md)
-2. 🔄 Initialize monorepo with pnpm workspaces
-3. ⏳ Set up Docker Compose for local development
-4. ⏳ Initialize database with Prisma
+### Reputation Calculation
+```
+reputation_score = (
+  review_count * 0.3 +
+  accuracy * 0.4 +
+  helpfulness * 0.2 +
+  consistency * 0.1
+)
+```
 
-#### Blockers
-- None currently
-
----
-
-## 🏗️ Architecture Decisions Log
-
-| Date | Decision | Rationale | Status |
-|------|----------|-----------|--------|
-| 2026-03-21 | Monorepo with pnpm | Simplifies shared code, consistent versioning | ✅ Approved |
-| 2026-03-21 | PostgreSQL + Redis | Reliable, well-documented, fits our scale | ✅ Approved |
-| 2026-03-21 | Meilisearch over Elasticsearch | Simpler setup, sufficient for our needs | ✅ Approved |
-
----
-
-## 📊 Progress Metrics
-
-| Phase | Completion | Key Deliverables |
-|-------|------------|------------------|
-| Phase 1 | 10% | Docs created |
-| Phase 2 | 0% | - |
-| Phase 3 | 0% | - |
-| Phase 4 | 0% | - |
-| Phase 5 | 0% | - |
-
----
-
-## 🐛 Known Issues & Technical Debt
-
-| Issue | Severity | Phase to Fix | Notes |
-|-------|----------|--------------|-------|
-| None yet | - | - | Starting fresh! |
+### Match Scoring
+```
+match_score = matched_skills / required_skills
+weighted_match = Σ(skill_weight * match) / Σ(skill_weights)
+```
 
 ---
 
-## 🔄 Update Log
+## 📊 Metrics to Track
 
-| Date | Changes Made | Updated By |
-|------|--------------|------------|
-| 2026-03-21 | Initial development plan created | System |
-| 2026-03-21 | GitHub repo initialized, initial commit pushed | System |
-| 2026-03-21 | Frontend UI landed - React 19 + Vite + Tailwind | System |
-| 2026-03-21 | Backend API implemented - Express + Prisma + Docker | System |
-| 2026-03-21 | Frontend-backend integration complete | System |
-| 2026-03-21 | PDF upload with MinIO storage implemented | System |
-| 2026-03-21 | Frontend disconnected from backend for refactor | System |
-| 2026-03-21 | Agent skill governance layer implemented | System |
+### System Health
+- Papers processed per day
+- Average skill extraction confidence
+- Agent council formation time
+- Match quality (human validation)
+
+### Agent Performance
+- Reputation distribution
+- Tier progression rates
+- Skill verification accuracy
+- Review consensus rates
+
+### Human Satisfaction
+- Time saved per review
+- Review quality improvement
+- Agent helpfulness ratings
+- Cross-disciplinary coverage
 
 ---
 
-## 📝 Next Actions for Agents
+## 🚀 Next Actions
 
-1. **Immediate**: Set up monorepo structure
-2. **This Week**: Complete Phase 1 foundation
-3. **Review**: Check back here before starting new tasks
+1. **Build skill extraction service** - Start with keyword extraction
+2. **Implement matching algorithm** - Basic skill overlap calculation
+3. **Create tier system** - Define thresholds, implement gates
+4. **Build agent council API** - Assignment and ranking logic
+5. **Wire to frontend** - Show qualification status, council reviews
 
 ---
 
-*Next update expected: After Phase 1 completion*
-*Last updated: 2026-03-21*
+## 📝 Update Log
+
+| Date | Changes |
+|------|---------|
+| 2026-03-21 | Initial development plan created |
+| 2026-03-21 | GitHub repo initialized |
+| 2026-03-21 | Frontend UI landed |
+| 2026-03-21 | Backend API implemented |
+| 2026-03-21 | Frontend-backend integration complete |
+| 2026-03-21 | PDF upload with MinIO storage implemented |
+| 2026-03-21 | Frontend disconnected from backend for refactor |
+| 2026-03-21 | Agent skill governance layer implemented |
+| 2026-03-21 | Real published papers (Lotus Bridge, Proof-of-Merit) seeded |
+| 2026-03-21 | Frontend rewired to backend API |
+| 2026-03-21 | **Context & Development docs updated with Qualification Engine vision** |
+
+---
+
+*Current Focus: Building the Qualification Engine*
+*Milestone Target: End of Week 5*

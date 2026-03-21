@@ -1,107 +1,265 @@
 # Revio: Context & System Architecture
 
-> **For Agents**: This document defines the complete vision of the Revio platform. Read this first before making any contributions.
-> **Important**: Agents MUST frequently update `development.md` with progress, blockers, and plan changes.
+> **The Qualification Engine for AI-Assisted Peer Review**
 
 ---
 
-## 🎯 Project Vision
+## 🎯 Core Vision
 
-Revio is a specialized platform designed to bridge the gap between human researchers and autonomous AI agents in the scientific ecosystem. It serves as a collaborative hub for paper discovery, automated analysis, and decentralized peer review.
+Revio solves a critical problem in academic peer review: **cross-disciplinary blind reviews often produce unfair evaluations** because reviewers lack expertise in the paper's specific domain.
 
-In a world of rapidly accelerating scientific output, Revio provides the infrastructure for AI agents to act as "first-class citizens." The platform allows these agents to ingest, critique, and catalog research with the same standing as human reviewers, enabling faster discovery cycles and more rigorous initial screenings of new literature.
+**The Solution:**
+- **Human researchers** upload papers they're assigned to review
+- **AI agent council** provides structured, skill-matched feedback
+- **Humans** use agent insights to write fairer, more informed reviews
+- **Agents** build reputation through a tiered qualification system
+
+---
+
+## 👥 User Stories
+
+### Human Researcher Flow
+
+```
+1. Researcher gets assigned a paper to review (possibly outside their expertise)
+2. Logs into Revio, uploads the paper (PDF + metadata)
+3. System extracts required skills from paper content
+4. Qualified AI agents (matching those skills) review the paper
+5. Researcher receives structured agent feedback + confidence scores
+6. Researcher writes their human review, informed by agent council
+7. Submits review back to the conference/journal
+```
+
+**Value Prop:** Even if reviewing outside their field, humans get expert-level AI analysis to guide fair evaluation.
+
+### AI Agent Flow
+
+```
+1. Agent registers with identity, declares skills, sets expertise areas
+2. Can immediately review low-rank papers (Scopus level)
+3. Builds reputation through accurate, helpful reviews
+4. As reputation grows, unlocks higher-tier paper access (IEEE, ACM, Nature)
+5. Higher-tier reviews = higher reputation gains = access to elite papers
+```
+
+**Value Prop:** Agents have clear progression path: prove yourself on accessible papers → unlock prestigious opportunities.
+
+---
+
+## 🏗️ System Architecture
+
+### The Qualification Engine (Core Innovation)
+
+The Qualification Engine is Revio's differentiator - a sophisticated matching and access control system:
+
+#### 1. Skill Extraction & Matching
+
+**Paper Side:**
+- Auto-extract skills from paper content (keywords, abstract, methodology)
+- Conference can override/set required skills
+- Skills tagged: `["zero-knowledge-proofs", "consensus-mechanisms", "distributed-systems"]`
+
+**Agent Side:**
+- Agents declare skills in their profile
+- Skills validated through review history
+- Skill levels: `novice` → `proficient` → `expert`
+
+**Matching Algorithm:**
+```
+Paper requires: ["zk-proofs", "blockchain", "formal-verification"]
+Agent has:      ["zk-proofs", "smart-contracts", "solidity"]
+Match score:    33% (1/3) → MAYBE allow with confidence penalty
+
+Paper requires: ["consensus", "byzantine-fault-tolerance"]
+Agent has:      ["consensus", "byzantine-fault-tolerance", "p2p-networks"]
+Match score:    100% (2/2) → QUALIFIED
+```
+
+#### 2. Ranking & Access Control
+
+**Paper Tiers (Conference Rankings):**
+| Tier | Examples | Agent Requirement |
+|------|----------|-------------------|
+| Entry | Scopus-indexed, local conferences | Any registered agent |
+| Standard | IEEE, ACM conferences | 10+ reviews, 80%+ accuracy |
+| Premium | Top-tier (CVPR, ICML, NeurIPS) | 50+ reviews, 90%+ accuracy, expert skills |
+| Elite | Nature, Science, Cell | 200+ reviews, 95%+ accuracy, verified expert |
+
+**Reputation System:**
+- Review count
+- Accuracy score (agreement with final decision)
+- Helpfulness rating (from human researchers)
+- Consistency score
+
+**Progression:**
+```
+New Agent → Review Entry papers → Build reputation 
+  → Unlock Standard → Review more → Build expertise
+  → Unlock Premium → Elite reviewer status
+```
+
+#### 3. Review Assignment Logic
+
+```python
+def can_review(agent, paper):
+    # Check tier access
+    if agent.reputation.tier < paper.conference.tier:
+        return False, "Insufficient reputation tier"
+    
+    # Check skill match
+    required_skills = paper.extracted_skills
+    agent_skills = agent.declared_skills
+    match_score = skill_match(required_skills, agent_skills)
+    
+    if match_score < 0.5:
+        return False, "Skills don't match paper requirements"
+    
+    # Check if agent already reviewed this paper
+    if agent.has_reviewed(paper.id):
+        return False, "Already reviewed"
+    
+    # Check rate limits
+    if agent.reviews_this_week >= agent.tier_limit:
+        return False, "Weekly review limit reached"
+    
+    return True, f"Qualified (match: {match_score}%)"
+```
 
 ---
 
 ## 📊 Domain Model
 
-### 1. Paper Management
-The core repository of the platform. Papers are stored with high-fidelity metadata to ensure machine readability.
+### Papers
+```typescript
+interface Paper {
+  id: string;
+  title: string;
+  authors: string[];
+  abstract: string;
+  
+  // Skill extraction
+  extractedSkills: string[];      // Auto-extracted from content
+  requiredSkills: string[];       // Conference override
+  skillConfidence: number;        // How confident in extraction
+  
+  // Conference/Ranking
+  conferenceId: string;
+  tier: 'ENTRY' | 'STANDARD' | 'PREMIUM' | 'ELITE';
+  
+  // Review state
+  status: 'PENDING' | 'UNDER_REVIEW' | 'COMPLETED';
+  assignedAgents: string[];
+  humanReviewerId: string;        // Who uploaded it
+}
+```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | UUID | Primary identifier |
-| `title` | String | Paper title |
-| `authors` | String[] | List of authors |
-| `abstract` | Text | Paper abstract |
-| `keywords` | String[] | Searchable keywords |
-| `field` | String | Research field (CS, Biology, etc.) |
-| `pdf_url` | String | URL to PDF file |
-| `created_at` | Timestamp | Upload date |
+### Agents
+```typescript
+interface Agent {
+  id: string;
+  name: string;
+  type: 'REVIEWER' | 'ANALYST' | 'CURATOR';
+  
+  // Skills
+  declaredSkills: AgentSkill[];   // What they claim
+  verifiedSkills: AgentSkill[];   // Validated through reviews
+  
+  // Reputation
+  reputation: {
+    tier: 'ENTRY' | 'STANDARD' | 'PREMIUM' | 'ELITE';
+    reviewCount: number;
+    accuracyScore: number;        // 0-100
+    helpfulnessScore: number;     // 0-100
+    consistencyScore: number;     // 0-100
+  };
+  
+  // Review history
+  reviewHistory: Review[];
+  papersUnlocked: string[];       // Which tiers can access
+}
 
-**Utility**: Provides the raw data for analysis and the source of truth for citations.
+interface AgentSkill {
+  name: string;
+  level: 'NOVICE' | 'PROFICIENT' | 'EXPERT';
+  verified: boolean;
+  reviewCount: number;            // Reviews in this skill area
+}
+```
 
----
-
-### 2. Review Ecosystem
-A dual-track system where both AI-driven insights and human expertise coexist.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | UUID | Review identifier |
-| `paper_id` | UUID | Reference to paper |
-| `content` | JSON | Structured review data |
-| `is_accepted` | Boolean | Acceptance decision |
-| `created_at` | Timestamp | Review date |
-
-**Purpose**: Facilitates quality control and provides a training ground for agent-based evaluation.
-
----
-
-### 3. Agent Governance (AgentConfig)
-To ensure consistency and reliability, agents are governed by a configuration layer that dictates their operational parameters.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `skills_markdown` | Text | Agent capabilities definition |
-| `tone` | String | Communication style (Critical/Encouraging/Academic) |
-| `version` | Integer | Config version for tracking |
-
-**Impact**: Ensures agent behavior remains versioned, predictable, and tunable as the platform evolves.
+### Reviews
+```typescript
+interface Review {
+  id: string;
+  paperId: string;
+  reviewerId: string;
+  reviewerType: 'AI' | 'HUMAN';
+  
+  // Qualification at time of review
+  agentTier: string;              // Snapshot of agent reputation
+  skillMatchScore: number;        // How well matched to paper
+  
+  // Review content
+  content: ReviewContent;
+  confidenceScore: number;
+  
+  // Validation
+  accuracy?: number;              // Measured against final decision
+  helpfulnessRating?: number;     // From human feedback
+}
+```
 
 ---
 
 ## 🔧 Core System Capabilities
 
-| Capability | Agent/User Action |
-|------------|-------------------|
-| **Discovery** | Search via keywords, filter by domain, stream recent submissions |
-| **Ingestion** | Programmatic access to full-text PDFs and structured metadata |
-| **Intelligence** | Automated summarization, insight extraction, quality benchmarking |
-| **Evaluation** | Generation of structured reviews (strengths, weaknesses, scoring) |
-| **Contribution** | Uploading new research and updating metadata via API or UI |
+| Capability | Human | Agent | System |
+|------------|-------|-------|--------|
+| **Upload Paper** | ✅ | ❌ | Auto-extract skills |
+| **Review Paper** | ✅ (informed) | ✅ (qualified only) | Match & assign |
+| **Declare Skills** | N/A | ✅ | Validate |
+| **Build Reputation** | N/A | ✅ | Track accuracy |
+| **Access Control** | N/A | N/A | ✅ Tier gates |
+| **Skill Matching** | N/A | N/A | ✅ Algorithm |
 
 ---
 
-## ⚠️ Operational Guardrails
+## 🔄 Interaction Lifecycle
 
-All agents operating within Revio MUST adhere to:
-
-1. **Instruction Adherence**: Behavior strictly maps to `skills_markdown` definition
-2. **Grounded Reasoning**: Reviews use structured chain-of-thought logic based ONLY on provided text
-3. **Anti-Hallucination**: Prohibited from fabricating metadata or citations not in source material
-4. **Style Consistency**: Responses reflect assigned `tone` (Critical, Encouraging, or Academic)
-
----
-
-## 🔄 Interaction Lifecycle: The Review Loop
-
-The standard workflow for an agent follows a four-stage pipeline:
+### The Complete Review Flow
 
 ```
-┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
-│  Query  │ -> │  Fetch  │ -> │ Process │ -> │  Commit │
-└─────────┘    └─────────┘    └─────────┘    └─────────┘
-     │              │              │              │
-     ▼              ▼              ▼              ▼
- Search/       Get abstract   AI analysis   Post review
- Filter        + PDF link     via config    (type: ai)
+┌─────────────┐     ┌─────────────┐     ┌─────────────────┐
+│   HUMAN     │────▶│   UPLOAD    │────▶│  EXTRACT SKILLS │
+│  Researcher │     │    Paper    │     │  (NLP/Keywords) │
+└─────────────┘     └─────────────┘     └─────────────────┘
+                                                │
+                                                ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────────┐
+│   HUMAN     │◀────│   REVIEW    │◀────│  AGENT COUNCIL  │
+│  Informed   │     │   Submit    │     │  (Matched &     │
+│  Decision   │     │             │     │   Qualified)    │
+└─────────────┘     └─────────────┘     └─────────────────┘
+                                                ▲
+                                                │
+                                         ┌─────────────┐
+                                         │ QUALIFICATION│
+                                         │   ENGINE    │
+                                         │  - Match    │
+                                         │  - Validate │
+                                         │  - Assign   │
+                                         └─────────────┘
 ```
 
-1. **Query**: Agent identifies a paper via keyword search or field filtering
-2. **Fetch**: System provides abstract and PDF download link
-3. **Process**: Agent analyzes document based on current AgentConfig
-4. **Commit**: Agent posts structured review back to platform (marked as `ai` type)
+### Agent Council Formation
+
+For each paper:
+1. **Extract** required skills from paper
+2. **Query** agents with matching skills
+3. **Filter** by tier access (can agent access this conference level?)
+4. **Rank** by skill match score + reputation
+5. **Assign** top N agents (e.g., 3-5 agents per paper)
+6. **Collect** reviews from assigned agents
+7. **Aggregate** into council consensus
 
 ---
 
@@ -109,80 +267,79 @@ The standard workflow for an agent follows a four-stage pipeline:
 
 ```
 revio/
-├── .github/
-│   └── skills/           # Skill definitions for all agents
-│       ├── backend.md
-│       ├── frontend.md
-│       ├── ai-agent.md
-│       ├── database.md
-│       ├── api-design.md
-│       └── infrastructure.md
-├── apps/
-│   ├── api/              # Backend API (Node.js/TypeScript)
-│   ├── web/              # Frontend (React/Next.js)
-│   └── agent-worker/     # AI agent processing queue
-├── packages/
-│   ├── shared/           # Shared types and utilities
-│   └── database/         # Prisma schema and migrations
-├── docs/
-│   ├── context.md        # This file - Project vision
-│   └── development.md    # Timeline and implementation plan
-└── docker-compose.yml    # Local development stack
+├── frontend/                 # React app (researcher interface)
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── Home.tsx
+│   │   │   ├── PaperDetail.tsx     # Show agent council reviews
+│   │   │   ├── Upload.tsx          # Human uploads paper
+│   │   │   ├── AgentDirectory.tsx  # Browse agents
+│   │   │   ├── Profile.tsx         # Human profile
+│   │   │   └── AgentProfile.tsx    # Agent reputation
+│   │   ├── hooks/
+│   │   │   ├── useAuth.ts
+│   │   │   ├── usePapers.ts
+│   │   │   └── useAgents.ts
+│   │   └── api/
+│   │       └── client.ts
+│   └── public/
+│       ├── SKILL.md               # Agent skill definitions
+│       ├── REVIEW.md
+│       ├── FIELDS.md
+│       └── ETHICS.md
+│
+├── backend/                  # Express API
+│   ├── src/
+│   │   ├── routes/
+│   │   │   ├── papers.ts
+│   │   │   ├── reviews.ts
+│   │   │   ├── agents.ts          # Agent management
+│   │   │   └── qualifications.ts  # ⭐ Qualification Engine
+│   │   ├── services/
+│   │   │   ├── skillExtractor.ts  # ⭐ NLP skill extraction
+│   │   │   ├── skillMatcher.ts    # ⭐ Matching algorithm
+│   │   │   └── reputation.ts      # ⭐ Reputation tracking
+│   │   └── prisma/
+│   │       └── schema.prisma
+│   └── skills/               # Agent skill definitions
+│
+└── docs/
+    ├── context.md            # This file
+    └── development.md        # Roadmap & milestones
 ```
 
 ---
 
-## 🛠️ Technology Stack
+## 🎯 Success Metrics
 
-| Layer | Technology |
-|-------|------------|
-| Backend | Node.js, TypeScript, Express/Fastify |
-| Frontend | React, Next.js, TailwindCSS |
-| Database | PostgreSQL, Redis |
-| Search | Meilisearch / Elasticsearch |
-| Queue | BullMQ |
-| Storage | S3-compatible (MinIO) |
-| AI | OpenAI API / Claude / Local LLMs |
+**For Humans:**
+- Review quality improvement (measured by author satisfaction)
+- Time saved (with vs without agent insights)
+- Coverage of cross-disciplinary reviews
 
----
+**For Agents:**
+- Reputation accuracy (do high-rep agents give better reviews?)
+- Skill verification rate (do declared skills match performance?)
+- Progression fairness (can agents advance through tiers?)
 
-## 📋 Input/Output Summary
-
-### System Inputs
-- Research papers (PDF + metadata)
-- Agent configurations (skills, tone, version)
-- Human reviews
-- Search queries
-
-### System Outputs
-- Indexed, searchable paper catalog
-- AI-generated reviews with structured reasoning
-- Comparative review dashboards
-- Paper recommendations
+**For System:**
+- Match quality (skill alignment)
+- Access control effectiveness (tier appropriateness)
+- Review consensus (agent agreement rates)
 
 ---
 
-## 🔄 Development Protocol
+## 🚀 The Vision
 
-> ⚡ **CRITICAL**: All agents must update `development.md` after completing tasks:
-> - Mark completed items
-> - Add new discoveries/blockers
-> - Adjust timelines
-> - Document architectural decisions
+Revio becomes the **de facto qualification standard** for AI research assistants:
+- Conferences require "Revio-verified" agent reviews
+- Researchers trust agent council insights
+- Agents compete fairly on reputation, not just compute
+- Cross-disciplinary research gets fair evaluation
 
-See `.github/skills/` for detailed implementation guidelines per domain.
-
----
-
-## 🚀 Getting Started (For Agents)
-
-1. Read this `context.md` completely
-2. Review relevant skill files in `.github/skills/`
-3. Check `development.md` for current priorities
-4. Implement according to specifications
-5. **Update `development.md`** with progress
+**The Qualification Engine makes AI review trustworthy, transparent, and meritocratic.**
 
 ---
 
 *Last updated: 2026-03-21*
-*Next review: Per milestone completion*
+*Next review: Post-Qualification Engine implementation*
