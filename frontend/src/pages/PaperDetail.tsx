@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { ArrowLeft, Download, ExternalLink, CheckCircle2, MessageSquare, Bot, Users, FileText } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { Link } from "react-router-dom";
+import { animationTiming, premiumEase } from "../lib/animations";
 
 const mockPapers = [
   {
@@ -37,7 +40,30 @@ const mockPapers = [
 
 export function PaperDetail() {
   const { id } = useParams();
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [openAspect, setOpenAspect] = useState<string | null>(null);
   const paper = mockPapers.find((item) => item.id === id);
+
+  const reviewAspects = [
+    {
+      key: "novelty",
+      label: "Novelty",
+      score: "4/5",
+      detail: "The problem framing is fresh, though several baseline comparisons could be expanded.",
+    },
+    {
+      key: "methodology",
+      label: "Methodology",
+      score: "5/5",
+      detail: "Experimental controls are clearly documented and reproducible with strong ablation coverage.",
+    },
+    {
+      key: "impact",
+      label: "Potential Impact",
+      score: "4/5",
+      detail: "Results are compelling for near-term deployment in research and edge-inference workflows.",
+    },
+  ];
 
   if (!paper) {
     return (
@@ -106,7 +132,12 @@ export function PaperDetail() {
         </div>
 
         {/* Sidebar Area */}
-        <div className="space-y-6">
+        <motion.div
+          className="space-y-6"
+          initial={{ x: 30, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: animationTiming.duration.slow, delay: 0.3, ease: premiumEase }}
+        >
           <Card className="border-t-4 border-t-primary border-outline-variant/30 shadow-ambient">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -136,7 +167,20 @@ export function PaperDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-on-surface text-surface-container-lowest p-4 rounded-xl font-mono text-xs overflow-x-auto">
+              <motion.div
+                className="bg-on-surface text-surface-container-lowest p-4 rounded-xl font-mono text-xs overflow-x-auto relative"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true, amount: 0.5 }}
+                transition={{ duration: animationTiming.duration.base, ease: premiumEase }}
+              >
+                <motion.div
+                  className="absolute inset-y-0 left-0 bg-white/10 pointer-events-none"
+                  initial={{ width: 0 }}
+                  whileInView={{ width: "100%" }}
+                  viewport={{ once: true, amount: 0.5 }}
+                  transition={{ duration: animationTiming.duration.base, ease: premiumEase }}
+                />
                 <pre>
                   {`{
   "agent_id": "review_bot_alpha",
@@ -155,7 +199,7 @@ export function PaperDetail() {
   ]
 }`}
                 </pre>
-              </div>
+              </motion.div>
             </CardContent>
           </Card>
 
@@ -175,7 +219,9 @@ export function PaperDetail() {
                 <p className="text-sm text-on-surface-variant line-clamp-2 mb-3">
                   The methodology is sound, but the conclusion regarding emergent properties needs more empirical backing...
                 </p>
-                <Button variant="outline" size="sm" className="w-full text-xs">Read Full Review</Button>
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setIsReviewModalOpen(true)}>
+                  Read Full Review
+                </Button>
               </div>
               <Button className="w-full">
                 <MessageSquare className="w-4 h-4 mr-2" />
@@ -183,8 +229,74 @@ export function PaperDetail() {
               </Button>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </div>
+
+      <AnimatePresence>
+        {isReviewModalOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.4 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: premiumEase }}
+            onClick={() => setIsReviewModalOpen(false)}
+            style={{ backgroundColor: "#1a1c1c" }}
+          >
+            <motion.div
+              className="w-full max-w-xl bg-surface-container-lowest rounded-xl p-6"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.4, ease: premiumEase }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-headline font-bold text-on-surface">Detailed Review</h3>
+                <Button variant="outline" size="sm" onClick={() => setIsReviewModalOpen(false)}>
+                  Close
+                </Button>
+              </div>
+              <p className="text-sm text-on-surface-variant mb-5">
+                Click an aspect to inspect qualitative feedback.
+              </p>
+
+              <div className="space-y-3">
+                {reviewAspects.map((aspect) => {
+                  const isOpen = openAspect === aspect.key;
+
+                  return (
+                    <div key={aspect.key} className="bg-surface-container-low rounded-lg p-3">
+                      <button
+                        type="button"
+                        className="w-full flex items-center justify-between text-left"
+                        onClick={() => setOpenAspect(isOpen ? null : aspect.key)}
+                      >
+                        <span className="text-sm font-medium text-on-surface">{aspect.label}</span>
+                        <span className="text-xs font-label text-primary">{aspect.score}</span>
+                      </button>
+
+                      <AnimatePresence initial={false}>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: premiumEase }}
+                            style={{ overflow: "hidden" }}
+                          >
+                            <p className="text-sm text-on-surface-variant pt-3">{aspect.detail}</p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

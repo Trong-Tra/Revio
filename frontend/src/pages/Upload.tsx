@@ -1,5 +1,6 @@
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, useRef, ChangeEvent, DragEvent } from 'react';
 import { UploadCloud, File, CheckCircle2, X } from 'lucide-react';
+import { motion } from 'motion/react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -12,6 +13,9 @@ export function Upload() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  const parsingProgress = Math.min(100, uploadProgress * 1.2);
+  const metadataProgress = Math.max(0, Math.min(100, (uploadProgress - 30) * 1.43));
   
   // Form state
   const [title, setTitle] = useState('');
@@ -19,7 +23,7 @@ export function Upload() {
   const [abstract, setAbstract] = useState('');
   const [keywords, setKeywords] = useState('');
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
   };
@@ -28,7 +32,7 @@ export function Upload() {
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
@@ -160,10 +164,39 @@ export function Upload() {
                       <span className="text-primary">{uploadProgress}%</span>
                     </div>
                     <div className="w-full bg-surface-container-high rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${uploadProgress}%` }}
-                      ></div>
+                      <motion.div
+                        className="bg-primary h-2 rounded-full"
+                        animate={{ width: `${uploadProgress}%` }}
+                        transition={{ duration: 1.5, ease: 'linear' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1 text-on-surface-variant">
+                      <span>Parsing PDF Structure</span>
+                      <span>{Math.round(parsingProgress)}%</span>
+                    </div>
+                    <div className="w-full bg-surface-container-high rounded-full h-1.5">
+                      <motion.div
+                        className="bg-primary/80 h-1.5 rounded-full"
+                        animate={{ width: `${parsingProgress}%` }}
+                        transition={{ duration: 1.5, ease: 'linear' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1 text-on-surface-variant">
+                      <span>Extracting Metadata</span>
+                      <span>{Math.round(metadataProgress)}%</span>
+                    </div>
+                    <div className="w-full bg-surface-container-high rounded-full h-1.5">
+                      <motion.div
+                        className="bg-primary/60 h-1.5 rounded-full"
+                        animate={{ width: `${metadataProgress}%` }}
+                        transition={{ duration: 1.5, ease: 'linear' }}
+                      />
                     </div>
                   </div>
                 </div>

@@ -1,4 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
+import { motion } from "motion/react";
+import { premiumEase } from "../../lib/animations";
 
 export function TopNav() {
   const location = useLocation();
@@ -20,17 +22,25 @@ export function TopNav() {
 
           <nav className="hidden md:flex items-center gap-6 font-sans text-sm tracking-tight">
             {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={
-                  location.pathname === item.path
-                    ? "text-emerald-700 font-semibold border-b-2 border-emerald-700 pb-1"
-                    : "text-zinc-500 hover:text-zinc-900 transition-colors duration-200"
-                }
-              >
-                {item.name}
-              </Link>
+              <div key={item.path} className="relative">
+                <Link
+                  to={item.path}
+                  className={
+                    location.pathname === item.path
+                      ? "text-emerald-700 font-semibold py-1 block"
+                      : "text-zinc-500 hover:text-zinc-900 transition-colors duration-200 py-1 block"
+                  }
+                >
+                  {item.name}
+                </Link>
+                {location.pathname === item.path && (
+                  <motion.div
+                    layoutId="active-nav"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-700"
+                    transition={{ duration: 0.4, ease: premiumEase }}
+                  />
+                )}
+              </div>
             ))}
           </nav>
         </div>

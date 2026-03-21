@@ -1,19 +1,52 @@
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
+import { animationTiming, premiumEase } from "../lib/animations";
 
 export function Home() {
   const navigate = useNavigate();
+
+  const heroContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: animationTiming.stagger.hero },
+    },
+  };
+
+  const heroItem = {
+    hidden: { y: 20, opacity: 0 },
+    show: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: animationTiming.duration.hero, ease: premiumEase },
+    },
+  };
+
+  const cardReveal = {
+    hidden: { opacity: 0, scale: 0.98 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: animationTiming.duration.base, ease: premiumEase },
+    },
+  };
   return (
     <div className="bg-surface font-body text-on-surface antialiased">
       <main className="pt-24 pb-24 px-6 md:px-24 max-w-[1440px] mx-auto">
-        <section className="hero-gradient pt-16 pb-24 text-center">
+        <motion.section
+          className="hero-gradient pt-16 pb-24 text-center"
+          variants={heroContainer}
+          initial="hidden"
+          animate="show"
+        >
           <div className="max-w-4xl mx-auto px-4">
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter font-headline text-on-surface mb-8 leading-[1.1]">
+            <motion.h1 variants={heroItem} className="text-5xl md:text-7xl font-extrabold tracking-tighter font-headline text-on-surface mb-8 leading-[1.1]">
               AI-Powered Peer Review for the <span className="text-primary">Next Era</span> of Science
-            </h1>
-            <p className="text-lg md:text-xl text-on-surface-variant font-body leading-relaxed mb-12 max-w-3xl mx-auto">
+            </motion.h1>
+            <motion.p variants={heroItem} className="text-lg md:text-xl text-on-surface-variant font-body leading-relaxed mb-12 max-w-3xl mx-auto">
               Synthetica bridges the gap between human intuition and machine precision, providing a sanctuary for high-fidelity research discovery and autonomous agent collaboration.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            </motion.p>
+            <motion.div variants={heroItem} className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button className="primary-gradient-cta text-on-primary px-10 py-4 rounded-full font-label font-bold text-sm tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
                 Explore Papers
               </button>
@@ -23,9 +56,9 @@ export function Home() {
               >
                 Upload Research
               </Link>
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         <header className="mb-16">
           <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter font-headline text-on-surface mb-4">
@@ -96,9 +129,14 @@ export function Home() {
               <span className="font-label text-xs text-outline uppercase tracking-[0.2em]">Showing 12 of 842 records</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <article
+              <motion.article
                 className="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
                 onClick={() => navigate("/paper/1")}
+                variants={cardReveal}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ delay: 0 * animationTiming.stagger.cards }}
               >
                 <div className="relative h-48 w-full overflow-hidden bg-surface-container">
                   <img
@@ -128,11 +166,16 @@ export function Home() {
                     <button className="material-symbols-outlined text-on-surface-variant hover:text-primary">bookmark_add</button>
                   </div>
                 </div>
-              </article>
+              </motion.article>
 
-              <article
+              <motion.article
                 className="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
                 onClick={() => navigate("/paper/2")}
+                variants={cardReveal}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ delay: 1 * animationTiming.stagger.cards }}
               >
                 <div className="relative h-48 w-full overflow-hidden bg-surface-container">
                   <img
@@ -162,11 +205,16 @@ export function Home() {
                     <button className="material-symbols-outlined text-on-surface-variant hover:text-primary">bookmark_add</button>
                   </div>
                 </div>
-              </article>
+              </motion.article>
 
-              <article
+              <motion.article
                 className="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
                 onClick={() => navigate("/paper/3")}
+                variants={cardReveal}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ delay: 2 * animationTiming.stagger.cards }}
               >
                 <div className="relative h-48 w-full overflow-hidden bg-surface-container">
                   <img
@@ -196,7 +244,7 @@ export function Home() {
                     <button className="material-symbols-outlined text-on-surface-variant hover:text-primary">bookmark_add</button>
                   </div>
                 </div>
-              </article>
+              </motion.article>
             </div>
             <div className="mt-16 flex justify-center">
               <button className="px-10 py-4 border border-outline-variant/30 rounded-full font-label text-xs font-bold uppercase tracking-widest hover:bg-surface-container-low transition-colors">

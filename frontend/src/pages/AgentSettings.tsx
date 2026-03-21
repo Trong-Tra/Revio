@@ -1,13 +1,38 @@
 import { useState } from "react";
 import { Settings, Sliders, Activity, Save, Play } from "lucide-react";
+import { motion } from "motion/react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Textarea } from "../components/ui/Textarea";
 import { Badge } from "../components/ui/Badge";
+import { premiumEase } from "../lib/animations";
 
 export function AgentSettings() {
   const [activeTab, setActiveTab] = useState("skills");
+  const [skillText, setSkillText] = useState(`# Meta-Agent Skill Definition
+
+## Core Capabilities
+- Methodology Verification
+- Statistical Rigor Analysis
+- Citation Graph Traversal
+
+## Instructions
+1. Extract all mathematical formulas and verify their derivations.
+2. Cross-reference citations against the OpenAlex database.
+3. Flag any claims that lack empirical backing.
+
+## Output Format
+Return findings in strict JSON format matching the ReviewSchema.`);
+  const [livePulseKey, setLivePulseKey] = useState(0);
+  const [activeTone, setActiveTone] = useState("Academic & Objective");
+
+  const toneOptions = ["Academic & Objective", "Constructive & Helpful", "Strict & Rigorous"];
+
+  const handleSkillChange = (value: string) => {
+    setSkillText(value);
+    setLivePulseKey((prev) => prev + 1);
+  };
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-6 max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
@@ -78,20 +103,8 @@ export function AgentSettings() {
                 </div>
                 <Textarea 
                   className="font-mono text-sm bg-transparent border-none focus-visible:ring-0 min-h-[400px] resize-y"
-                  defaultValue={`# Meta-Agent Skill Definition
-
-## Core Capabilities
-- Methodology Verification
-- Statistical Rigor Analysis
-- Citation Graph Traversal
-
-## Instructions
-1. Extract all mathematical formulas and verify their derivations.
-2. Cross-reference citations against the OpenAlex database.
-3. Flag any claims that lack empirical backing.
-
-## Output Format
-Return findings in strict JSON format matching the ReviewSchema.`}
+                  value={skillText}
+                  onChange={(event) => handleSkillChange(event.target.value)}
                 />
               </div>
             </CardContent>
@@ -108,9 +121,22 @@ Return findings in strict JSON format matching the ReviewSchema.`}
               <div className="space-y-4">
                 <label className="text-sm font-medium text-on-surface">Primary Tone</label>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="default" className="px-4 py-1.5 cursor-pointer">Academic & Objective</Badge>
-                  <Badge variant="outline" className="px-4 py-1.5 cursor-pointer hover:bg-surface-container">Constructive & Helpful</Badge>
-                  <Badge variant="outline" className="px-4 py-1.5 cursor-pointer hover:bg-surface-container">Strict & Rigorous</Badge>
+                  {toneOptions.map((tone) => (
+                    <motion.button
+                      key={tone}
+                      type="button"
+                      onClick={() => setActiveTone(tone)}
+                      whileTap={{ scale: 0.95 }}
+                      animate={activeTone === tone ? { scale: [1, 1.05, 1] } : { scale: 1 }}
+                      transition={{ duration: 0.2, ease: premiumEase }}
+                    >
+                      <Badge
+                        variant={activeTone === tone ? "default" : "outline"}
+                      >
+                        <span className="px-4 py-1.5 inline-block">{tone}</span>
+                      </Badge>
+                    </motion.button>
+                  ))}
                 </div>
               </div>
 
@@ -148,6 +174,15 @@ Return findings in strict JSON format matching the ReviewSchema.`}
                 <div className="flex-1">
                   <p className="font-medium text-sm text-on-surface">Sample Paper: Quantum Entanglement.pdf</p>
                   <p className="text-xs text-on-surface-variant">Selected for testing</p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                  <motion.span
+                    key={livePulseKey}
+                    className="w-2.5 h-2.5 rounded-full bg-primary"
+                    animate={{ opacity: [0.6, 1, 0.6] }}
+                    transition={{ duration: 1, ease: "easeInOut" }}
+                  />
+                  Live Preview
                 </div>
                 <Button variant="outline" size="sm">Change</Button>
               </div>
