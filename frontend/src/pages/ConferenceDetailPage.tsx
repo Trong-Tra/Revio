@@ -1,43 +1,11 @@
 import { motion } from "motion/react";
 import { 
-  Calendar, 
-  MapPin, 
   Verified, 
   Cpu, 
-  MemoryStick as Memory, 
-  User, 
-  ArrowRight,
   Download,
   Sparkles
 } from "lucide-react";
-import { useParams, Link } from "react-router-dom";
-
-const committee = [
-  {
-    name: "Dr. Elena Volkov",
-    role: "General Chair",
-    org: "ETH Zurich",
-    img: "https://picsum.photos/seed/elena/400/400"
-  },
-  {
-    name: "Prof. Marcus Chen",
-    role: "Technical Chair",
-    org: "Stanford AI Lab",
-    img: "https://picsum.photos/seed/marcus/400/400"
-  },
-  {
-    name: "Sarah Jenkins",
-    role: "Ethics Lead",
-    org: "DeepMind Ethics",
-    img: "https://picsum.photos/seed/sarah/400/400"
-  },
-  {
-    name: "Dr. Aris Thorne",
-    role: "Publicity Chair",
-    org: "University of Tokyo",
-    img: "https://picsum.photos/seed/aris/400/400"
-  }
-];
+import { useNavigate, useParams } from "react-router-dom";
 
 const deadlines = [
   {
@@ -60,8 +28,32 @@ const deadlines = [
   }
 ];
 
+const conferenceStatuses = [
+  "CFP NOT OPEN",
+  "SUBMISSION OPEN",
+  "SUMISSION CLOSE",
+  "UNDER REVIEW",
+  "DECISION RELEASED",
+  "CAMERA READY",
+  "REGISTRATION",
+  "ON GOING",
+  "COMPLETED",
+];
+
+const conferenceNamesById: Record<string, string> = {
+  "neurips-2024": "NeurIPS 2024",
+  "icml-2024": "ICML 2024",
+  "cvpr-2024": "CVPR 2024",
+  "rss-2025": "RSS 2025",
+  "siggraph-2024": "SIGGRAPH 2024",
+  "icra-2025": "ICRA 2025",
+};
+
 export default function ConferenceDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const conferenceName = conferenceNamesById[id ?? ""] ?? "Neural Architectures 2024";
+  const currentStatus = "SUBMISSION OPEN";
 
   return (
     <motion.div 
@@ -89,7 +81,7 @@ export default function ConferenceDetailPage() {
               transition={{ delay: 0.1 }}
               className="text-6xl md:text-8xl font-headline font-extrabold tracking-tighter text-on-surface mb-8 leading-[0.9]"
             >
-              Neural Architectures 2024
+              {conferenceName}
             </motion.h1>
 
             <div className="flex flex-wrap gap-x-12 gap-y-4">
@@ -212,6 +204,25 @@ export default function ConferenceDetailPage() {
         </motion.section>
       </div>
 
+      {/* Conference Lifecycle Status */}
+      <section className="mb-24">
+        <h2 className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-6">Conference Status</h2>
+        <div className="flex flex-wrap gap-3">
+          {conferenceStatuses.map((status) => (
+            <span
+              key={status}
+              className={`px-4 py-2 rounded-full text-xs font-label font-bold tracking-wider ${
+                status === currentStatus
+                  ? "bg-primary text-on-primary"
+                  : "bg-surface-container-low text-on-surface-variant"
+              }`}
+            >
+              {status}
+            </span>
+          ))}
+        </div>
+      </section>
+
       {/* Timeline */}
       <section className="mb-24">
         <h2 className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-12">Critical Deadlines</h2>
@@ -221,28 +232,6 @@ export default function ConferenceDetailPage() {
               <span className="font-label text-xs font-bold text-primary mb-2 block">{d.id} / {d.label}</span>
               <h4 className="text-2xl font-headline font-bold mb-4">{d.date}</h4>
               <p className="text-on-surface-variant text-sm">{d.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Committee */}
-      <section className="mb-24">
-        <h2 className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-12">Program Committee</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {committee.map((person) => (
-            <div key={person.name} className="group">
-              <div className="aspect-square bg-surface-container-high rounded-lg mb-4 overflow-hidden grayscale hover:grayscale-0 transition-all duration-500">
-                <img 
-                  src={person.img} 
-                  alt={person.name} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              <h5 className="text-lg font-bold">{person.name}</h5>
-              <p className="font-label text-xs text-on-surface-variant uppercase tracking-wider">{person.role}</p>
-              <p className="text-xs text-on-surface-variant mt-1">{person.org}</p>
             </div>
           ))}
         </div>
@@ -261,7 +250,10 @@ export default function ConferenceDetailPage() {
         <h2 className="text-4xl md:text-5xl font-headline font-bold mb-6 relative z-10">Ready to present your findings?</h2>
         <p className="text-zinc-400 max-w-xl mx-auto mb-10 text-lg relative z-10">Join 400+ world-leading researchers in defining the next decade of neural architecture design.</p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-          <button className="primary-gradient text-white px-10 py-4 rounded-full font-sans font-bold text-lg hover:shadow-2xl hover:shadow-primary/20 transition-all">
+          <button
+            className="primary-gradient text-white px-10 py-4 rounded-full font-sans font-bold text-lg hover:shadow-2xl hover:shadow-primary/20 transition-all"
+            onClick={() => navigate(`/upload?conference=${encodeURIComponent(conferenceName)}`)}
+          >
             Submit Research
           </button>
           <button className="bg-zinc-800 text-white px-10 py-4 rounded-full font-sans font-medium text-lg border border-zinc-700 hover:bg-zinc-700 transition-all flex items-center justify-center gap-2">

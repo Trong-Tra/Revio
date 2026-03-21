@@ -9,7 +9,6 @@ export function TopNav() {
     { name: "Home", path: "/" },
     { name: "Conferences", path: "/conferences" },
     { name: "AI Agents", path: "/settings" },
-    { name: "Documentation", path: "/docs" },
     { name: "Upload", path: "/upload" },
   ];
 

@@ -1,12 +1,26 @@
 import { useState, useRef, ChangeEvent, DragEvent } from 'react';
 import { UploadCloud, File, CheckCircle2, X } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 
 export function Upload() {
+  const location = useLocation();
+  const conferenceFromQuery = new URLSearchParams(location.search).get('conference') ?? '';
+
+  const conferenceOptions = [
+    'NeurIPS 2024',
+    'ICML 2024',
+    'CVPR 2024',
+    'RSS 2025',
+    'SIGGRAPH 2024',
+    'ICRA 2025',
+    'Neural Architectures 2024',
+  ];
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isDragging, setIsDragging] = useState(false);
@@ -22,6 +36,13 @@ export function Upload() {
   const [authors, setAuthors] = useState('');
   const [abstract, setAbstract] = useState('');
   const [keywords, setKeywords] = useState('');
+  const [conferenceQuery, setConferenceQuery] = useState(conferenceFromQuery);
+  const [selectedConference, setSelectedConference] = useState(conferenceFromQuery);
+  const [showConferenceOptions, setShowConferenceOptions] = useState(false);
+
+  const filteredConferenceOptions = conferenceOptions.filter((conference) =>
+    conference.toLowerCase().includes(conferenceQuery.toLowerCase())
+  );
 
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
@@ -213,6 +234,49 @@ export function Upload() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
+              <label className="text-sm font-medium text-on-surface">Conference</label>
+              <div className="relative">
+                <Input
+                  placeholder="Type conference name to search..."
+                  value={conferenceQuery}
+                  onChange={(e) => {
+                    setConferenceQuery(e.target.value);
+                    setSelectedConference('');
+                    setShowConferenceOptions(true);
+                  }}
+                  onFocus={() => setShowConferenceOptions(true)}
+                  disabled={isUploading}
+                />
+
+                {showConferenceOptions && conferenceQuery.trim().length > 0 && (
+                  <div className="absolute z-20 mt-2 w-full bg-surface border border-outline-variant/30 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                    {filteredConferenceOptions.length > 0 ? (
+                      filteredConferenceOptions.map((conference) => (
+                        <button
+                          key={conference}
+                          type="button"
+                          onClick={() => {
+                            setConferenceQuery(conference);
+                            setSelectedConference(conference);
+                            setShowConferenceOptions(false);
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm hover:bg-surface-container-low transition-colors"
+                        >
+                          {conference}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-on-surface-variant">No conference found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              {selectedConference && (
+                <p className="text-xs text-primary">Selected conference: {selectedConference}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <label className="text-sm font-medium text-on-surface">Title</label>
               <Input 
                 placeholder="Paper title..." 
@@ -261,7 +325,7 @@ export function Upload() {
               <Button variant="ghost" disabled={isUploading}>Save Draft</Button>
               <Button 
                 onClick={handleSubmit}
-                disabled={!file || isUploading}
+                disabled={!file || !selectedConference || isUploading}
               >
                 {isUploading ? 'Processing...' : 'Submit for Review'}
               </Button>

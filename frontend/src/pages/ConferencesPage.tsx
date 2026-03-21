@@ -23,7 +23,6 @@ const conferences = [
     description: "Focusing on the next generation of neural information processing systems and collaborative AI agents in deep research.",
     attendees: "+12k",
     timeLeft: "6 Days Left",
-    type: "available",
     featured: false,
     avatars: [
       "https://picsum.photos/seed/p1/100/100",
@@ -33,22 +32,20 @@ const conferences = [
   {
     id: "icml-2024",
     title: "ICML 2024",
-    status: "PROCESSING",
+    status: "CLOSE",
     date: "July 21 - July 27",
     location: "Vienna, Austria",
     description: "Reviews in progress. The 41st International Conference on Machine Learning brings together experts across the globe.",
     idCode: "ML-0482-SYN",
-    type: "processing",
     featured: false
   },
   {
     id: "cvpr-2024",
     title: "CVPR 2024",
-    status: "CLOSED",
+    status: "ARCHIEVE",
     date: "June 17 - June 21",
     location: "Seattle, USA",
     description: "Archives now available in the documentation library. Submissions for 2024 cycle are fully concluded.",
-    type: "closed",
     featured: false,
     isArchived: true
   },
@@ -59,28 +56,25 @@ const conferences = [
     date: "August 05 - August 10",
     location: "Tokyo, Japan",
     description: "Robotics: Science and Systems. A high-bandwidth symposium focusing on the future of autonomous embodiment and kinetic AI.",
-    type: "available",
     featured: true
   },
   {
     id: "siggraph-2024",
     title: "SIGGRAPH 2024",
-    status: "OPEN",
+    status: "UP COMING",
     date: "July 28 - Aug 01",
     location: "Denver, USA",
     description: "The premier conference on computer graphics and interactive techniques, exploring the intersection of generative AI and vision.",
-    type: "available",
     featured: false,
     earlyBird: true
   },
   {
     id: "icra-2025",
     title: "ICRA 2025",
-    status: "PROCESSING",
+    status: "UP COMING",
     date: "May 19 - May 23",
     location: "Atlanta, USA",
     description: "Technical session proposals are currently under heavy vetting for the 2025 International Conference on Robotics and Automation.",
-    type: "processing",
     featured: false,
     progress: 65
   }
@@ -89,6 +83,17 @@ const conferences = [
 const researchAreas = ["AI", "ML", "Robotics", "Systems", "Vision", "NLP"];
 
 export default function ConferencesPage() {
+  const statusOrder: Record<string, number> = {
+    OPEN: 0,
+    CLOSE: 1,
+    "UP COMING": 2,
+    ARCHIEVE: 3,
+  };
+
+  const sortedConferences = [...conferences].sort(
+    (a, b) => statusOrder[a.status] - statusOrder[b.status]
+  );
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -118,13 +123,16 @@ export default function ConferencesPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
         <div className="flex gap-1 p-1 bg-surface-container-low rounded-xl w-fit">
           <button className="px-6 py-2 rounded-lg bg-surface-container-lowest text-primary font-label text-sm font-semibold shadow-sm">
-            Available
+            Open
           </button>
           <button className="px-6 py-2 rounded-lg text-on-surface-variant font-label text-sm font-medium hover:bg-surface-container transition-colors">
-            Processing
+            Close
           </button>
           <button className="px-6 py-2 rounded-lg text-on-surface-variant font-label text-sm font-medium hover:bg-surface-container transition-colors">
-            Closed
+            Up Coming
+          </button>
+          <button className="px-6 py-2 rounded-lg text-on-surface-variant font-label text-sm font-medium hover:bg-surface-container transition-colors">
+            Archieve
           </button>
         </div>
 
@@ -144,22 +152,23 @@ export default function ConferencesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {conferences.map((conf, index) => (
+        {sortedConferences.map((conf, index) => (
           <motion.div
             key={conf.id}
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 * index }}
             className={`group relative p-8 rounded-xl transition-all duration-300 ${
-              conf.type === 'closed' 
+              conf.status === 'ARCHIEVE'
                 ? 'bg-surface-container-low/50 opacity-80 grayscale-[0.2]' 
                 : 'bg-surface-container-lowest shadow-sm hover:shadow-md'
-            } ${conf.type === 'processing' ? 'border-l-4 border-amber-400/20' : ''}`}
+            } ${conf.status === 'CLOSE' ? 'border-l-4 border-amber-400/20' : ''}`}
           >
             <div className="flex justify-between items-start mb-6">
               <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-label font-bold ${
                 conf.status === 'OPEN' ? 'bg-emerald-50 text-emerald-700' : 
-                conf.status === 'PROCESSING' ? 'bg-amber-50 text-amber-700' : 
+                conf.status === 'CLOSE' ? 'bg-amber-50 text-amber-700' :
+                conf.status === 'UP COMING' ? 'bg-blue-50 text-blue-700' :
                 'bg-surface-container-high text-on-surface-variant'
               }`}>
                 {conf.status === 'OPEN' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />}
@@ -168,8 +177,10 @@ export default function ConferencesPage() {
               <div className="text-on-surface-variant opacity-40 group-hover:opacity-100 transition-opacity">
                 {conf.status === 'OPEN' ? (
                   conf.featured ? <Star className="w-5 h-5 fill-primary text-primary" /> : <Share2 className="w-5 h-5" />
-                ) : conf.status === 'PROCESSING' ? (
+                ) : conf.status === 'CLOSE' ? (
                   <Lock className="w-5 h-5" />
+                ) : conf.status === 'UP COMING' ? (
+                  <Calendar className="w-5 h-5" />
                 ) : (
                   <Archive className="w-5 h-5" />
                 )}
@@ -198,7 +209,11 @@ export default function ConferencesPage() {
             </p>
 
             <div className="pt-6 border-t border-outline-variant/10">
-              {conf.type === 'available' && (
+              <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-widest font-bold mb-4">
+                Status: {conf.status}
+              </p>
+
+              {conf.status === 'OPEN' && (
                 <div className="flex items-center justify-between">
                   {conf.avatars ? (
                     <div className="flex -space-x-2">
@@ -229,7 +244,7 @@ export default function ConferencesPage() {
                 </div>
               )}
 
-              {conf.type === 'processing' && (
+              {conf.status === 'CLOSE' && (
                 <div className="flex flex-col gap-3">
                   {conf.progress ? (
                     <>
@@ -253,7 +268,18 @@ export default function ConferencesPage() {
                 </div>
               )}
 
-              {conf.type === 'closed' && (
+              {conf.status === 'UP COMING' && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-label text-on-surface-variant uppercase tracking-widest font-bold">
+                    Opening Soon
+                  </span>
+                  <span className="text-xs font-mono bg-surface-container px-2 py-1 rounded text-on-surface-variant">
+                    {conf.timeLeft ?? "TBA"}
+                  </span>
+                </div>
+              )}
+
+              {conf.status === 'ARCHIEVE' && (
                 <button className="w-full border border-outline-variant text-on-surface font-label text-xs py-2 rounded hover:bg-surface-container-high transition-colors">
                   Access Library
                 </button>
