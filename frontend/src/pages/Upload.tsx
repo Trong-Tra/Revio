@@ -21,6 +21,15 @@ export function Upload() {
     'Neural Architectures 2024',
   ];
 
+  const authorOptions = [
+    'alice.chen@synthetica.org',
+    'john.doe@university.edu',
+    'sarah.weber@researchlab.ai',
+    'li.zhang@edge-systems.io',
+    'marcus.chen@stanford.edu',
+    'elena.volkov@ethz.ch',
+  ];
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isDragging, setIsDragging] = useState(false);
@@ -33,15 +42,23 @@ export function Upload() {
   
   // Form state
   const [title, setTitle] = useState('');
-  const [authors, setAuthors] = useState('');
   const [abstract, setAbstract] = useState('');
   const [keywords, setKeywords] = useState('');
   const [conferenceQuery, setConferenceQuery] = useState(conferenceFromQuery);
   const [selectedConference, setSelectedConference] = useState(conferenceFromQuery);
   const [showConferenceOptions, setShowConferenceOptions] = useState(false);
+  const [authorQuery, setAuthorQuery] = useState('');
+  const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+  const [showAuthorOptions, setShowAuthorOptions] = useState(false);
 
   const filteredConferenceOptions = conferenceOptions.filter((conference) =>
     conference.toLowerCase().includes(conferenceQuery.toLowerCase())
+  );
+
+  const filteredAuthorOptions = authorOptions.filter(
+    (author) =>
+      author.toLowerCase().includes(authorQuery.toLowerCase()) &&
+      !selectedAuthors.includes(author)
   );
 
   const handleDragOver = (e: DragEvent) => {
@@ -74,10 +91,24 @@ export function Upload() {
     }
   };
 
+  const addAuthor = (authorEmail: string) => {
+    if (!authorEmail || selectedAuthors.includes(authorEmail)) {
+      return;
+    }
+
+    setSelectedAuthors((prev) => [...prev, authorEmail]);
+    setAuthorQuery('');
+    setShowAuthorOptions(false);
+  };
+
+  const removeAuthor = (authorEmail: string) => {
+    setSelectedAuthors((prev) => prev.filter((author) => author !== authorEmail));
+  };
+
   const handleSubmit = () => {
     // Mock upload - no backend connection
     setIsUploading(true);
-    
+
     // Simulate progress
     let progress = 0;
     const interval = setInterval(() => {
@@ -287,15 +318,66 @@ export function Upload() {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-on-surface">
-                Authors <span className="text-xs text-on-surface-variant">(comma separated)</span>
-              </label>
-              <Input 
-                placeholder="e.g. John Doe, Jane Smith..." 
-                value={authors}
-                onChange={(e) => setAuthors(e.target.value)}
-                disabled={isUploading}
-              />
+              <label className="text-sm font-medium text-on-surface">Authors</label>
+              <div className="relative">
+                <Input
+                  placeholder="Type author email to search..."
+                  value={authorQuery}
+                  onChange={(e) => {
+                    setAuthorQuery(e.target.value);
+                    setShowAuthorOptions(true);
+                  }}
+                  onFocus={() => setShowAuthorOptions(true)}
+                  disabled={isUploading}
+                />
+
+                {showAuthorOptions && authorQuery.trim().length > 0 && (
+                  <div className="absolute z-20 mt-2 w-full bg-surface border border-outline-variant/30 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                    {filteredAuthorOptions.length > 0 ? (
+                      filteredAuthorOptions.map((author) => (
+                        <button
+                          key={author}
+                          type="button"
+                          onClick={() => addAuthor(author)}
+                          className="w-full text-left px-4 py-3 text-sm hover:bg-surface-container-low transition-colors"
+                        >
+                          {author}
+                        </button>
+                      ))
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => addAuthor(authorQuery.trim())}
+                        className="w-full text-left px-4 py-3 text-sm hover:bg-surface-container-low transition-colors"
+                      >
+                        Add "{authorQuery.trim()}"
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {selectedAuthors.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {selectedAuthors.map((author) => (
+                    <span
+                      key={author}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium"
+                    >
+                      {author}
+                      <button
+                        type="button"
+                        onClick={() => removeAuthor(author)}
+                        className="text-blue-700 hover:text-blue-900"
+                        aria-label={`Remove ${author}`}
+                        disabled={isUploading}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">
