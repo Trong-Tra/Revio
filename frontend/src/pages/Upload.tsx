@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { useConferences } from '../hooks/useConferences';
+import { papersApi } from '../api/client';
 
 export function Upload() {
   const navigate = useNavigate();
@@ -150,24 +151,22 @@ export function Upload() {
         formData.append('conferenceUrl', conferenceUrl);
       }
 
-      // Use raw fetch for FormData
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:3001/api/v1/upload', {
-        method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
-        body: formData,
+      // Use the API client for upload
+      const result = await papersApi.upload(file, {
+        title,
+        authors: authors.split(',').map(a => a.trim()),
+        abstract,
+        keywords: keywords.split(',').map(k => k.trim()),
+        field,
+        doi: doi || undefined,
+        conferenceId: conferenceId || undefined,
+        conferenceUrl: conferenceUrl || undefined,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Upload failed');
-      }
 
       clearInterval(progressInterval);
       setUploadProgress(100);
       setUploadSuccess(true);
-      setConferenceSource(data.meta?.conferenceSource || 'existing');
+      setConferenceSource(result.meta?.conferenceSource || 'existing');
       
       // Keep success state to show modal, don't auto-reset
     } catch (err) {
