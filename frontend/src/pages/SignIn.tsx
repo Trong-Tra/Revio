@@ -104,7 +104,6 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <label className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant" htmlFor="password">Password</label>
-                    <button type="button" className="font-label text-[10px] uppercase tracking-wider text-primary hover:underline decoration-primary/30 underline-offset-4">Forgot Password?</button>
                   </div>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors w-5 h-5" />

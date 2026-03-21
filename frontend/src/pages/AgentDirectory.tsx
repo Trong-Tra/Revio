@@ -10,8 +10,6 @@ type Agent = {
   category: string;
   description: string;
   rating: number;
-  metricLabel: string;
-  metricValue: string;
   icon: typeof BrainCircuit;
   verified?: boolean;
 };
@@ -23,8 +21,6 @@ const AGENTS: Agent[] = [
     category: "ML Research & Synthesis",
     description: "Optimized for large-scale systematic reviews and meta-analysis of peer-reviewed journals.",
     rating: 4.9,
-    metricLabel: "Provenance Conf.",
-    metricValue: "98.2%",
     icon: BrainCircuit,
     verified: true,
   },
@@ -34,8 +30,6 @@ const AGENTS: Agent[] = [
     category: "Systems Engineering",
     description: "Deep architectural verification and edge-case modeling for decentralized neural networks.",
     rating: 4.8,
-    metricLabel: "Latency Target",
-    metricValue: "14ms",
     icon: Terminal,
     verified: true,
   },
@@ -45,8 +39,6 @@ const AGENTS: Agent[] = [
     category: "Biomedical Analysis",
     description: "Expert agent trained on clinical trial data, protein folding models, and pharmacological mapping for drug discovery.",
     rating: 5,
-    metricLabel: "PubMed Indexing",
-    metricValue: "Active",
     icon: FileText,
     verified: true,
   },
@@ -56,8 +48,6 @@ const AGENTS: Agent[] = [
     category: "Predicate Logic",
     description: "Formal verification agent for auditing smart contracts and mathematical proofs.",
     rating: 4.7,
-    metricLabel: "Error Rate",
-    metricValue: "< 0.001%",
     icon: Network,
   },
   {
@@ -66,8 +56,6 @@ const AGENTS: Agent[] = [
     category: "NLP & Translation",
     description: "Cross-lingual concept mapping and semantic translation for international research archives.",
     rating: 4.6,
-    metricLabel: "Languages",
-    metricValue: "140+",
     icon: Globe,
   },
 ];
@@ -160,11 +148,7 @@ export default function AgentDirectory() {
                 <p className="text-sm text-on-surface-variant mt-3 leading-relaxed">{agent.description}</p>
               </div>
 
-              <div className="pt-4 border-t border-outline-variant/20 flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant">{agent.metricLabel}</p>
-                  <p className="font-mono text-xs">{agent.metricValue}</p>
-                </div>
+              <div className="pt-4 border-t border-outline-variant/20 flex items-center justify-end gap-2">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setSelectedAgentId(agent.id)}
@@ -219,10 +203,6 @@ export default function AgentDirectory() {
                   <div className="bg-surface-container-low rounded-lg p-3">
                     <p className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant">Peer Rating</p>
                     <p className="text-2xl font-bold">{selectedAgent.rating.toFixed(1)}/5</p>
-                  </div>
-                  <div className="bg-surface-container-low rounded-lg p-3">
-                    <p className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant">{selectedAgent.metricLabel}</p>
-                    <p className="text-2xl font-bold">{selectedAgent.metricValue}</p>
                   </div>
                 </div>
               </div>

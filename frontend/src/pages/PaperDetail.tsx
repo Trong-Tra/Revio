@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Download, ExternalLink, CheckCircle2, MessageSquare, Bot, Users, FileText } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, CheckCircle2, Bot, Users, FileText } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
@@ -13,28 +13,34 @@ const mockPapers = [
     id: "1",
     title: "Latent Space Alignment in Large Multimodal Systems",
     authors: "A. Chen, J. Doe, et al.",
-    doi: "10.48550/arXiv.2405.0122",
+    conferenceId: "neurips-2024",
+    conferenceName: "NeurIPS 2024",
     abstract:
       "Exploring the convergence of latent representations between vision and language models using contrastive manifold alignment, with an emphasis on robust transfer and interpretability.",
-    confidence: 98,
+    rating: 4.8,
+    decision: "Accepted",
   },
   {
     id: "2",
     title: "Algorithmic Transparency in Decentralized Governance",
     authors: "Dr. Sarah K. Weber",
-    doi: "10.1038/synthetica",
+    conferenceId: "icml-2024",
+    conferenceName: "ICML 2024",
     abstract:
       "An investigation into collective decision-making in DAOs and the impact of automated voting protocols on minority participation and governance outcomes.",
-    confidence: 94,
+    rating: 4.2,
+    decision: "Unaccepted",
   },
   {
     id: "3",
     title: "Low-Latency Inference in Heterogeneous Edge Clusters",
     authors: "L. Zhang, M. Saito",
-    doi: "10.1145/nips.2024.992",
+    conferenceId: "cvpr-2024",
+    conferenceName: "CVPR 2024",
     abstract:
       "Presenting a scheduling strategy for model parallelization across constrained IoT devices while maintaining inference quality under strict latency budgets.",
-    confidence: 91,
+    rating: 4.0,
+    decision: "Accepted",
   },
 ];
 
@@ -43,25 +49,44 @@ export function PaperDetail() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [openAspect, setOpenAspect] = useState<string | null>(null);
   const paper = mockPapers.find((item) => item.id === id);
+  const ratingProgress = paper ? (paper.rating / 5) * 100 : 0;
 
   const reviewAspects = [
     {
-      key: "novelty",
-      label: "Novelty",
+      key: "novelty-originality",
+      label: "Novelty and Originality",
       score: "4/5",
-      detail: "The problem framing is fresh, though several baseline comparisons could be expanded.",
+      detail: "The manuscript introduces a relevant framing with clear differentiation from common baselines.",
     },
     {
-      key: "methodology",
-      label: "Methodology",
+      key: "technical-rigour",
+      label: "Technical Content and Scientific Rigour",
       score: "5/5",
-      detail: "Experimental controls are clearly documented and reproducible with strong ablation coverage.",
+      detail: "Methods are well specified and reproducible, with robust controls and consistent statistical analysis.",
     },
     {
-      key: "impact",
-      label: "Potential Impact",
+      key: "presentation",
+      label: "Quality of Presentation",
       score: "4/5",
-      detail: "Results are compelling for near-term deployment in research and edge-inference workflows.",
+      detail: "Writing is mostly clear and organized, with only minor improvements needed in figure annotation.",
+    },
+    {
+      key: "relevance-timeliness",
+      label: "Relevance and Timeliness",
+      score: "5/5",
+      detail: "The topic is highly relevant and aligns well with current research priorities and open problems.",
+    },
+    {
+      key: "strong-aspect",
+      label: "Strong Aspect",
+      score: "5/5",
+      detail: "Excellent experimental discipline and clear articulation of practical implications.",
+    },
+    {
+      key: "weak-aspect",
+      label: "Weak Aspect",
+      score: "3/5",
+      detail: "Comparisons against one additional strong baseline would strengthen confidence in generalization.",
     },
   ];
 
@@ -95,7 +120,11 @@ export function PaperDetail() {
           <header className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <Badge variant="provenance">Verified by Meta-Agent</Badge>
-              <Badge variant="outline">DOI: {paper.doi}</Badge>
+              <Link to={`/conferences/${paper.conferenceId}`}>
+                <Badge variant="outline" className="hover:border-primary hover:text-primary transition-colors">
+                  Conference: {paper.conferenceName}
+                </Badge>
+              </Link>
             </div>
             <h1 className="text-3xl md:text-4xl font-label font-bold text-on-surface mb-4 leading-tight">
               {paper.title}
@@ -125,8 +154,31 @@ export function PaperDetail() {
             <CardHeader>
               <CardTitle>Abstract</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="max-h-40 overflow-y-auto">
               <p className="text-on-surface-variant leading-relaxed">{paper.abstract}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-outline-variant/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-on-surface-variant" />
+                Peer Review Community
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-sm">Dr. A. Turing</span>
+                  <Badge variant="secondary">Reviewer</Badge>
+                </div>
+                <p className="text-sm text-on-surface-variant line-clamp-2 mb-3">
+                  The methodology is sound, but the conclusion regarding emergent properties needs more empirical backing...
+                </p>
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setIsReviewModalOpen(true)}>
+                  Read Full Review
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -142,20 +194,27 @@ export function PaperDetail() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-primary" />
-                Confidence Score
+                Rating
               </CardTitle>
-              <CardDescription>Based on automated methodology checks</CardDescription>
+              <CardDescription>Peer-review rubric summary</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-5xl font-label font-bold text-primary mb-4">{paper.confidence}%</div>
+              <div className="text-5xl font-label font-bold text-primary mb-4">{paper.rating.toFixed(1)}/5</div>
               <div className="w-full bg-surface-container-high rounded-full h-2 mb-4">
-                <div className="bg-gradient-to-r from-primary to-primary-container h-2 rounded-full" style={{ width: `${paper.confidence}%` }}></div>
+                <div className="bg-gradient-to-r from-primary to-primary-container h-2 rounded-full" style={{ width: `${ratingProgress}%` }}></div>
               </div>
-              <ul className="space-y-2 text-sm text-on-surface-variant">
-                <li className="flex justify-between"><span>Citations Verified</span> <span className="font-medium text-on-surface">142/142</span></li>
-                <li className="flex justify-between"><span>Data Availability</span> <span className="font-medium text-on-surface">Public</span></li>
-                <li className="flex justify-between"><span>Statistical Rigor</span> <span className="font-medium text-on-surface">High</span></li>
+              <ul className="space-y-2 text-sm text-on-surface-variant mb-4">
+                <li className="flex justify-between"><span>Novelty and Originality</span> <span className="font-medium text-on-surface">4/5</span></li>
+                <li className="flex justify-between"><span>Technical Content and Scientific Rigour</span> <span className="font-medium text-on-surface">5/5</span></li>
+                <li className="flex justify-between"><span>Quality of Presentation</span> <span className="font-medium text-on-surface">4/5</span></li>
+                <li className="flex justify-between"><span>Relevance and Timeliness</span> <span className="font-medium text-on-surface">5/5</span></li>
               </ul>
+              <div className="rounded-lg border border-outline-variant/40 bg-surface-container-low p-3 flex items-center justify-between">
+                <span className="text-sm text-on-surface-variant">Decision</span>
+                <span className={`text-sm font-semibold ${paper.decision === "Accepted" ? "text-primary" : "text-amber-700"}`}>
+                  {paper.decision}
+                </span>
+              </div>
             </CardContent>
           </Card>
 
@@ -203,48 +262,22 @@ export function PaperDetail() {
             </CardContent>
           </Card>
 
-          <Card className="border border-outline-variant/30">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-on-surface-variant" />
-                Peer Review Community
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-sm">Dr. A. Turing</span>
-                  <Badge variant="secondary">Reviewer</Badge>
-                </div>
-                <p className="text-sm text-on-surface-variant line-clamp-2 mb-3">
-                  The methodology is sound, but the conclusion regarding emergent properties needs more empirical backing...
-                </p>
-                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setIsReviewModalOpen(true)}>
-                  Read Full Review
-                </Button>
-              </div>
-              <Button className="w-full">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Submit Review
-              </Button>
-            </CardContent>
-          </Card>
         </motion.div>
       </div>
 
       <AnimatePresence>
         {isReviewModalOpen && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center px-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.4 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: premiumEase }}
-            onClick={() => setIsReviewModalOpen(false)}
-            style={{ backgroundColor: "#1a1c1c" }}
-          >
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
             <motion.div
-              className="w-full max-w-xl bg-surface-container-lowest rounded-xl p-6"
+              className="absolute inset-0 bg-on-surface/60"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, ease: premiumEase }}
+              onClick={() => setIsReviewModalOpen(false)}
+            />
+            <motion.div
+              className="relative z-10 w-full max-w-xl bg-surface-container-lowest rounded-xl p-6 shadow-ambient"
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
@@ -294,7 +327,7 @@ export function PaperDetail() {
                 })}
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

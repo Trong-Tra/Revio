@@ -104,7 +104,7 @@ export function Home() {
                 Revio bridges human intuition and machine precision for high-fidelity research discovery.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button onClick={() => jumpToSection("search")} className="primary-gradient-cta text-on-primary px-10 py-4 rounded-full font-label font-bold text-sm tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
+                <button onClick={() => navigate("/library")} className="primary-gradient-cta text-on-primary px-10 py-4 rounded-full font-label font-bold text-sm tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
                   Explore Papers
                 </button>
                 <Link

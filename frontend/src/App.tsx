@@ -15,6 +15,7 @@ import { AgentSettings } from "./pages/AgentSettings";
 import { Documentation } from "./pages/Documentation";
 import ConferencesPage from "./pages/ConferencesPage";
 import ConferenceDetailPage from "./pages/ConferenceDetailPage";
+import PaperLibrary from "./pages/PaperLibrary";
 import AgentDirectory from "./pages/AgentDirectory";
 import AgentProfilePage from "./pages/AgentProfilePage";
 import SignIn from "./pages/SignIn";
@@ -44,7 +45,8 @@ function AppLayout() {
               <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/landing" element={<Navigate to="/" replace />} />
               <Route path="/research" element={<Navigate to="/" replace />} />
-              <Route path="/library" element={<Navigate to="/" replace />} />
+              <Route path="/library" element={<PaperLibrary />} />
+              <Route path="/papers" element={<PaperLibrary />} />
               <Route path="/paper/:id" element={<PaperDetail />} />
               <Route path="/papers/:id" element={<PaperDetail />} />
               <Route path="/conferences" element={<ConferencesPage />} />

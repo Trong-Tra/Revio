@@ -49,11 +49,20 @@ const conferenceNamesById: Record<string, string> = {
   "icra-2025": "ICRA 2025",
 };
 
+const conferenceStatusById: Record<string, string> = {
+  "neurips-2024": "SUBMISSION OPEN",
+  "icml-2024": "SUBMISSION CLOSE",
+  "cvpr-2024": "COMPLETED",
+  "rss-2025": "UNDER REVIEW",
+  "siggraph-2024": "REGISTRATION",
+  "icra-2025": "CFP NOT OPEN",
+};
+
 export default function ConferenceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const conferenceName = conferenceNamesById[id ?? ""] ?? "Neural Architectures 2024";
-  const currentStatus = "SUBMISSION OPEN";
+  const currentStatus = conferenceStatusById[id ?? ""] ?? "SUBMISSION OPEN";
 
   return (
     <motion.div 
@@ -95,7 +104,7 @@ export default function ConferenceDetailPage() {
               </div>
               <div className="flex flex-col">
                 <span className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-1">Status</span>
-                <span className="text-xl font-medium">Tier-1 Venue</span>
+                <span className="text-xl font-medium">{currentStatus}</span>
               </div>
             </div>
           </div>

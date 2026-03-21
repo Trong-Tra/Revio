@@ -10,6 +10,7 @@ export function TopNav() {
 
   const navItems = [
     { name: "Home", path: "/" },
+    { name: "Papers", path: "/library" },
     { name: "Agent Directory", path: "/agents" },
     { name: "Conferences", path: "/conferences" },
     { name: "Upload", path: "/upload" },

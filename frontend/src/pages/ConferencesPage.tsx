@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { useState } from "react";
 import { 
   Calendar, 
   MapPin, 
@@ -81,8 +82,13 @@ const conferences = [
 ];
 
 const researchAreas = ["AI", "ML", "Robotics", "Systems", "Vision", "NLP"];
+const statusFilters = ["OPEN", "CLOSE", "UP COMING", "ARCHIEVE"] as const;
+
+type ConferenceStatus = (typeof statusFilters)[number];
 
 export default function ConferencesPage() {
+  const [activeStatus, setActiveStatus] = useState<ConferenceStatus>("OPEN");
+
   const statusOrder: Record<string, number> = {
     OPEN: 0,
     CLOSE: 1,
@@ -93,6 +99,8 @@ export default function ConferencesPage() {
   const sortedConferences = [...conferences].sort(
     (a, b) => statusOrder[a.status] - statusOrder[b.status]
   );
+
+  const filteredConferences = sortedConferences.filter((conf) => conf.status === activeStatus);
 
   return (
     <motion.div 
@@ -122,18 +130,20 @@ export default function ConferencesPage() {
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
         <div className="flex gap-1 p-1 bg-surface-container-low rounded-xl w-fit">
-          <button className="px-6 py-2 rounded-lg bg-surface-container-lowest text-primary font-label text-sm font-semibold shadow-sm">
-            Open
-          </button>
-          <button className="px-6 py-2 rounded-lg text-on-surface-variant font-label text-sm font-medium hover:bg-surface-container transition-colors">
-            Close
-          </button>
-          <button className="px-6 py-2 rounded-lg text-on-surface-variant font-label text-sm font-medium hover:bg-surface-container transition-colors">
-            Up Coming
-          </button>
-          <button className="px-6 py-2 rounded-lg text-on-surface-variant font-label text-sm font-medium hover:bg-surface-container transition-colors">
-            Archieve
-          </button>
+          {statusFilters.map((status) => (
+            <button
+              key={status}
+              type="button"
+              onClick={() => setActiveStatus(status)}
+              className={`px-6 py-2 rounded-lg font-label text-sm transition-colors ${
+                activeStatus === status
+                  ? "bg-surface-container-lowest text-primary font-semibold shadow-sm"
+                  : "text-on-surface-variant font-medium hover:bg-surface-container"
+              }`}
+            >
+              {status}
+            </button>
+          ))}
         </div>
 
         <div className="flex flex-wrap gap-3 items-center">
@@ -152,7 +162,7 @@ export default function ConferencesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sortedConferences.map((conf, index) => (
+        {filteredConferences.map((conf, index) => (
           <motion.div
             key={conf.id}
             initial={{ y: 20, opacity: 0 }}

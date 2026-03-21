@@ -46,6 +46,19 @@ body {
   background: radial-gradient(circle at 50% -20%, rgba(0, 107, 85, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
 }
 
+.ghost-border {
+  border: 1px solid rgba(186, 202, 194, 0.2);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 .snap-container {
   height: calc(100vh - var(--top-nav-offset, 0px));
   overflow-y: scroll;
