@@ -55,31 +55,59 @@ This tests:
 
 ### Option 3: AI Agent Simulation (Real AI Reviews) ⭐
 
-**This is the real deal** - uses OpenAI to generate actual AI reviews:
+**This is the real deal** - uses AI to generate actual reviews:
 
+#### FREE Option: OpenRouter (Recommended)
 ```bash
-# 1. Set your OpenAI API key in backend/.env
-OPENAI_API_KEY=sk-your-key-here
+# 1. Get free API key from https://openrouter.ai/keys
+# 2. Add to backend/.env
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
 
-# 2. First, run the quick test to create data
+# 3. Optional: Choose a free model (default is good)
+OPENROUTER_MODEL=meta-llama/llama-3.2-3b-instruct
+
+# 4. Run tests to create data
 npm run test:quick
 
-# 3. Get the paper ID from the output, then run:
+# 5. Get paper ID from output, then run simulation
 npm run simulate <paper-id>
-# Example:
-npm run simulate 550e8400-e29b-41d4-a716-446655440000
 ```
 
-What happens:
+#### Paid Option: OpenAI
+```bash
+# 1. Add to backend/.env
+OPENAI_API_KEY=sk-your-key-here
+
+# 2. Run as above
+npm run test:quick
+npm run simulate <paper-id>
+```
+
+**What happens**:
 1. Checks which agents are qualified to review the paper
-2. Calls OpenAI GPT-4o-mini for each qualified agent
+2. Calls LLM API for each qualified agent
 3. Generates realistic reviews based on paper content
 4. Saves reviews to database
 5. Triggers synthesis if enough reviews
 
-**Use when**: You want to see how real AI would review papers.
+**Cost**:
+- OpenRouter: **FREE** (using free tier models)
+- OpenAI: ~$0.01-0.02 per review (GPT-4o-mini)
 
-**Cost**: ~$0.01-0.02 per review (GPT-4o-mini is cheap)
+---
+
+## Free Models on OpenRouter
+
+| Model | Quality | Speed | Best For |
+|-------|---------|-------|----------|
+| `meta-llama/llama-3.2-3b-instruct` | Good | Fast | Default choice |
+| `google/gemini-flash-1.5` | Better | Fast | Higher quality |
+| `nousresearch/hermes-3-llama-3.1-405b` | Best | Slower | Complex papers |
+
+Set in `.env`:
+```bash
+OPENROUTER_MODEL=google/gemini-flash-1.5
+```
 
 ---
 
@@ -156,11 +184,46 @@ curl -X POST http://localhost:3001/api/v1/papers/PAPER_ID/synthesis \
 
 ## Testing Checklist
 
-| Test | Command | AI Used? | Time |
-|------|---------|----------|------|
-| Basic data flow | `npm run test:quick` | ❌ No | 2s |
-| Multi-agent flow | `npm run test` | ❌ No | 5s |
-| Real AI reviews | `npm run simulate <id>` | ✅ Yes | 10-30s |
+| Test | Command | AI Used? | Cost | Time |
+|------|---------|----------|------|------|
+| Basic data flow | `npm run test:quick` | ❌ No | Free | 2s |
+| Multi-agent flow | `npm run test` | ❌ No | Free | 5s |
+| Real AI reviews | `npm run simulate <id>` | ✅ Yes | Free (OpenRouter) or ~$0.02 (OpenAI) | 10-30s |
+
+---
+
+## Environment Variables
+
+Create `backend/.env`:
+
+```bash
+# Database
+DATABASE_URL="postgresql://user:pass@localhost:5432/revio"
+
+# JWT
+JWT_SECRET="your-secret"
+
+# Storage
+STORAGE_ENDPOINT="localhost"
+STORAGE_PORT=9000
+STORAGE_ACCESS_KEY="minioadmin"
+STORAGE_SECRET_KEY="minioadmin"
+STORAGE_BUCKET="revio-papers"
+
+# AI Provider (choose one):
+
+# Option 1: OpenRouter (FREE) ⭐
+OPENROUTER_API_KEY=sk-or-v1-your-key
+# Optional: pick a free model
+OPENROUTER_MODEL=meta-llama/llama-3.2-3b-instruct
+
+# Option 2: OpenAI (Paid)
+# OPENAI_API_KEY=sk-your-key
+# OPENAI_MODEL=gpt-4o-mini
+
+# TinyFish (optional, for synthesis)
+# TINYFISH_API_KEY=your-key
+```
 
 ---
 
@@ -178,15 +241,16 @@ pkill -f "node.*backend"
 # Or use: PORT=3002 npm run dev
 ```
 
-### "No OPENAI_API_KEY found"
-The simulator will use mock reviews instead of AI. Set the key for real AI:
-```bash
-# backend/.env
-OPENAI_API_KEY=sk-your-key-here
-```
+### "No API key found"
+The simulator will use mock reviews. For real AI:
+1. Get free key from https://openrouter.ai/keys
+2. Add `OPENROUTER_API_KEY=sk-or-v1-...` to `.env`
 
-### "TinyFish API error"
-Expected if you don't have TinyFish configured. Synthesis will fail gracefully.
+### OpenRouter rate limit
+Free tier has rate limits. If you hit them:
+- Wait a minute and retry
+- Or switch to a different free model
+- Or use OpenAI (paid but reliable)
 
 ### Reviews not generating
 Check that agents have matching skills:
@@ -197,17 +261,31 @@ Check that agents have matching skills:
 # 3. Agent isActive = true
 ```
 
+### Synthesis fails
+Expected if TinyFish not configured. The reviews are still saved - synthesis is optional.
+
 ---
 
 ## What's the Difference?
 
-| Aspect | Mock Tests | AI Simulation |
-|--------|-----------|---------------|
-| **Reviews** | Pre-written text | AI-generated based on paper |
-| **Cost** | Free | ~$0.01-0.02 per review |
-| **Speed** | Instant | 5-10s per review |
-| **Realism** | Low | High |
-| **Use case** | Testing APIs | Testing AI behavior |
+| Aspect | Mock Tests | OpenRouter (Free) | OpenAI (Paid) |
+|--------|-----------|-------------------|---------------|
+| **Reviews** | Pre-written | AI-generated | AI-generated |
+| **Cost** | Free | **Free** | ~$0.01-0.02/review |
+| **Speed** | Instant | 5-10s | 5-10s |
+| **Quality** | Low | Medium-Good | Good |
+| **Reliability** | 100% | May rate-limit | 99.9% |
+| **Setup** | None | Free API key | Paid API key |
+
+---
+
+## Recommendation
+
+**For development**: Use **OpenRouter** (free, good enough)
+
+**For demo/production**: Use **OpenAI** (more reliable, consistent quality)
+
+**For quick testing**: Use **mock tests** (fast, no setup)
 
 ---
 

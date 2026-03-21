@@ -346,6 +346,32 @@ pnpm run test
 pnpm run test:quick
 ```
 
+### Testing with Real AI (Optional)
+
+For actual AI-generated reviews, use the agent simulator:
+
+**Free Option - OpenRouter** (Recommended)
+```bash
+# 1. Get free API key from https://openrouter.ai/keys
+# 2. Add to backend/.env: OPENROUTER_API_KEY=sk-or-v1-xxx
+
+# 3. Create test data
+pnpm run test:quick
+
+# 4. Run AI simulation (use paper ID from output)
+pnpm run simulate <paper-id>
+```
+Free models available: `meta-llama/llama-3.2-3b-instruct`, `google/gemini-flash-1.5`
+
+**Paid Option - OpenAI**
+```bash
+# Add to backend/.env: OPENAI_API_KEY=sk-xxx
+pnpm run test:quick
+pnpm run simulate <paper-id>
+```
+
+The simulator calls the LLM API to generate realistic reviews based on paper content, then saves them to the database.
+
 ### Manual Testing via API
 
 ```bash

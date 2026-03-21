@@ -1,10 +1,17 @@
 /**
  * Agent Simulator Service
  * 
- * Simulates AI agents by calling LLM APIs (OpenAI, etc.)
+ * Simulates AI agents by calling LLM APIs (OpenAI, OpenRouter, etc.)
  * This allows testing the full flow with actual AI-generated reviews locally.
  * 
- * Usage: Set OPENAI_API_KEY in .env, then call simulateReview()
+ * Usage: 
+ *   Option 1 - OpenAI: Set OPENAI_API_KEY in .env
+ *   Option 2 - OpenRouter (FREE): Set OPENROUTER_API_KEY in .env
+ * 
+ * OpenRouter Free Models:
+ *   - meta-llama/llama-3.2-3b-instruct (fast, decent)
+ *   - google/gemini-flash-1.5 (good quality)
+ *   - nousresearch/hermes-3-llama-3.1-405b (large, slower)
  */
 
 import { PrismaClient, Paper, AgentConfig, ReviewAttitude } from '@prisma/client';
@@ -16,31 +23,88 @@ interface ReviewResult {
   attitude: ReviewAttitude;
 }
 
+interface LLMConfig {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  headers: Record<string, string>;
+  provider: string;
+}
+
 /**
- * Simulate an agent reviewing a paper using OpenAI
+ * Get LLM configuration from environment
+ * Priority: OpenRouter > OpenAI > None (mock)
+ */
+function getLLMConfig(): LLMConfig | null {
+  // Check for OpenRouter (FREE option)
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
+  if (openRouterKey) {
+    // Free models on OpenRouter
+    const freeModels = [
+      'meta-llama/llama-3.2-3b-instruct',  // Fast, decent quality
+      'google/gemini-flash-1.5',            // Good quality, fast
+      'nousresearch/hermes-3-llama-3.1-405b', // Large model, slower
+    ];
+    
+    const model = process.env.OPENROUTER_MODEL || freeModels[0];
+    
+    return {
+      baseUrl: 'https://openrouter.ai/api/v1',
+      apiKey: openRouterKey,
+      model,
+      headers: {
+        'Authorization': `Bearer ${openRouterKey}`,
+        'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000', // Required by OpenRouter
+        'X-Title': 'Revio Agent Simulator', // Optional but nice
+      },
+      provider: 'OpenRouter'
+    };
+  }
+  
+  // Check for OpenAI
+  const openAIKey = process.env.OPENAI_API_KEY;
+  if (openAIKey) {
+    return {
+      baseUrl: 'https://api.openai.com/v1',
+      apiKey: openAIKey,
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      headers: {
+        'Authorization': `Bearer ${openAIKey}`,
+      },
+      provider: 'OpenAI'
+    };
+  }
+  
+  return null;
+}
+
+/**
+ * Simulate an agent reviewing a paper using LLM
  */
 export async function simulateReviewWithAI(
   paper: Paper,
   agent: AgentConfig & { skills: Array<{ name: string; level: string }> }
 ): Promise<ReviewResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const config = getLLMConfig();
   
-  if (!apiKey) {
-    console.warn('[AgentSimulator] No OPENAI_API_KEY found, using mock review');
+  if (!config) {
+    console.warn('[AgentSimulator] No API key found (OPENAI_API_KEY or OPENROUTER_API_KEY), using mock review');
     return generateMockReview(paper, agent);
   }
 
   const prompt = buildReviewPrompt(paper, agent);
   
+  console.log(`[AgentSimulator] Using ${config.provider} with ${config.model}`);
+  
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`${config.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        ...config.headers,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // Cheapest option for testing
+        model: config.model,
         messages: [
           {
             role: 'system',
@@ -57,7 +121,7 @@ Provide a concise review (200-400 words) with:
 End with a JSON block:
 {"attitude": "POSITIVE|NEUTRAL|NEGATIVE"}
 
-Be critical but fair. Ground all claims in the provided abstract.`
+Be critical but fair. Ground all claims in the provided abstract. Be concise.`
           },
           {
             role: 'user',
@@ -71,12 +135,22 @@ Be critical but fair. Ground all claims in the provided abstract.`
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('[AgentSimulator] OpenAI error:', error);
+      console.error(`[AgentSimulator] ${config.provider} error:`, error);
+      console.log('[AgentSimulator] Falling back to mock review');
       return generateMockReview(paper, agent);
     }
 
     const data = await response.json();
-    const content = data.choices[0]?.message?.content || '';
+    
+    // Handle OpenRouter's different response format
+    const content = data.choices?.[0]?.message?.content || 
+                   data.choices?.[0]?.text || 
+                   '';
+    
+    if (!content) {
+      console.error('[AgentSimulator] Empty response from LLM');
+      return generateMockReview(paper, agent);
+    }
     
     // Parse attitude from JSON block
     const attitudeMatch = content.match(/\{[^}]*"attitude"\s*:\s*"(POSITIVE|NEUTRAL|NEGATIVE)"[^}]*\}/i);
@@ -91,6 +165,7 @@ Be critical but fair. Ground all claims in the provided abstract.`
     
   } catch (error) {
     console.error('[AgentSimulator] Error:', error);
+    console.log('[AgentSimulator] Falling back to mock review');
     return generateMockReview(paper, agent);
   }
 }
@@ -180,6 +255,14 @@ Major revision or rejection recommended.`
 export async function runAgentSimulation(paperId: string): Promise<void> {
   console.log('\n🤖 Starting Agent Simulation\n');
   
+  const config = getLLMConfig();
+  if (config) {
+    console.log(`✓ Using ${config.provider} (${config.model})`);
+  } else {
+    console.log('⚠ No API key found, will use mock reviews');
+    console.log('  Set OPENROUTER_API_KEY or OPENAI_API_KEY in .env for real AI\n');
+  }
+  
   // 1. Fetch paper
   const paper = await prisma.paper.findUnique({
     where: { id: paperId },
@@ -205,6 +288,8 @@ export async function runAgentSimulation(paperId: string): Promise<void> {
   console.log(`🔍 Found ${agents.length} active agents\n`);
   
   // 3. Have each qualified agent review
+  let reviewedCount = 0;
+  
   for (const agent of agents.slice(0, 3)) { // Limit to 3 for testing
     // Check qualification
     const agentSkillNames = agent.skills.map(s => s.name);
@@ -237,7 +322,13 @@ export async function runAgentSimulation(paperId: string): Promise<void> {
       }
     });
     
-    console.log(`   ✅ Saved: ${review.attitude}\n`);
+    console.log(`   ✅ Saved: ${review.attitude}`);
+    if (!config) {
+      console.log(`   (Mock review - set API key for real AI)`);
+    }
+    console.log();
+    
+    reviewedCount++;
   }
   
   // 4. Check if we have enough reviews for synthesis
@@ -298,6 +389,8 @@ export async function runAgentSimulation(paperId: string): Promise<void> {
       console.log('⚠️  Synthesis failed (TinyFish not configured?), using local fallback');
       // Local fallback would go here
     }
+  } else {
+    console.log(`⚠️  Need at least 2 reviews for synthesis (have ${reviewCount})\n`);
   }
   
   console.log('✨ Simulation complete!\n');
@@ -309,7 +402,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   
   if (!paperId) {
     console.log('Usage: npx tsx src/services/agentSimulator.ts <paper-id>');
-    console.log('Or use: npm run simulate <paper-id>');
+    console.log('Or use: npm run simulate <paper-id>\n');
+    console.log('Environment Variables:');
+    console.log('  OPENROUTER_API_KEY  - Use OpenRouter (FREE models available)');
+    console.log('  OPENROUTER_MODEL    - Optional: meta-llama/llama-3.2-3b-instruct (default)');
+    console.log('                      - google/gemini-flash-1.5');
+    console.log('                      - nousresearch/hermes-3-llama-3.1-405b');
+    console.log('  OPENAI_API_KEY      - Use OpenAI instead');
+    console.log('  OPENAI_MODEL        - Optional: gpt-4o-mini (default)\n');
     process.exit(1);
   }
   
