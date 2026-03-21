@@ -2,8 +2,17 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, Crea
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 
+// Debug: Log all storage env vars
+console.log('[Storage] Env vars:');
+console.log('  STORAGE_ENDPOINT:', process.env.STORAGE_ENDPOINT);
+console.log('  STORAGE_PORT:', process.env.STORAGE_PORT);
+console.log('  STORAGE_USE_SSL:', process.env.STORAGE_USE_SSL);
+console.log('  STORAGE_ACCESS_KEY:', process.env.STORAGE_ACCESS_KEY ? '***set***' : '***NOT SET***');
+console.log('  STORAGE_SECRET_KEY:', process.env.STORAGE_SECRET_KEY ? '***set***' : '***NOT SET***');
+
 // Detect storage provider
-const isR2 = process.env.STORAGE_ENDPOINT?.includes('r2.cloudflarestorage.com');
+const isR2 = process.env.STORAGE_ENDPOINT?.includes('r2.cloudfloreststorage.com') || 
+             process.env.STORAGE_ENDPOINT?.includes('r2.cloudflarestorage.com');
 const isMinIO = !isR2;
 
 // Build endpoint URL
@@ -17,19 +26,15 @@ function buildEndpoint(): string {
   
   // Otherwise construct from parts
   const protocol = process.env.STORAGE_USE_SSL === 'true' ? 'https' : 'http';
-  const port = process.env.STORAGE_PORT || (isR2 ? '443' : '9000');
   
-  // R2 doesn't need port in URL
-  if (isR2) {
-    return `${protocol}://${endpoint}`;
-  }
-  
-  return `${protocol}://${endpoint}:${port}`;
+  // R2 uses port 443 (https), no port needed in URL
+  return `${protocol}://${endpoint}`;
 }
 
 const ENDPOINT = buildEndpoint();
-console.log('[Storage] Endpoint:', ENDPOINT);
-console.log('[Storage] Provider:', isR2 ? 'R2' : 'MinIO');
+console.log('[Storage] Built endpoint:', ENDPOINT);
+console.log('[Storage] Is R2:', isR2);
+console.log('[Storage] Is MinIO:', isMinIO);
 
 // Configure S3 client
 const s3Client = new S3Client({
