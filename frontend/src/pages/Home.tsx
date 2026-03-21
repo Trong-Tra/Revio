@@ -1,24 +1,38 @@
-import { useState } from 'react';
 import { Link } from "react-router-dom";
-import { ArrowRight, Search, FileText, Bot, Users, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowRight, Search, FileText, Bot, Users, Sparkles } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
-import { usePapers } from "../hooks/usePapers";
+
+// Mock data - disconnected from backend
+const recentDiscoveries = [
+  {
+    id: 1,
+    title: "Emergent Behaviors in Large Language Models",
+    authors: "Dr. Elena Rostova, et al.",
+    confidence: "98%",
+    tags: ["AI", "NLP", "Cognitive Science"],
+    date: "Oct 24, 2023",
+  },
+  {
+    id: 2,
+    title: "Quantum Error Correction via Topological Codes",
+    authors: "Prof. James Maxwell",
+    confidence: "95%",
+    tags: ["Quantum Computing", "Physics"],
+    date: "Oct 22, 2023",
+  },
+  {
+    id: 3,
+    title: "Synthetic Biology Approaches to Carbon Capture",
+    authors: "Dr. Sarah Chen",
+    confidence: "92%",
+    tags: ["Biology", "Climate Tech"],
+    date: "Oct 20, 2023",
+  },
+];
 
 export function Home() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const { papers, loading, error, meta } = usePapers({ search: searchQuery || undefined });
-
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
   return (
     <div className="min-h-screen pt-24 pb-12 px-6 max-w-7xl mx-auto">
       {/* Hero Section */}
@@ -110,76 +124,34 @@ export function Home() {
             <input 
               type="text" 
               placeholder="Filter by topic..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
         </div>
         
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <span className="ml-3 text-on-surface-variant">Loading papers...</span>
-          </div>
-        ) : error ? (
-          <div className="text-center py-20">
-            <p className="text-red-500 mb-4">{error}</p>
-            <p className="text-on-surface-variant text-sm">
-              Make sure the backend server is running on port 3001
-            </p>
-          </div>
-        ) : papers.length === 0 ? (
-          <div className="text-center py-20">
-            <FileText className="w-16 h-16 text-outline mx-auto mb-4" />
-            <p className="text-on-surface-variant">No papers found</p>
-            <Link to="/upload" className="text-primary hover:underline mt-2 inline-block">
-              Upload the first paper
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {recentDiscoveries.map((paper) => (
+            <Link to={`/paper/${paper.id}`} key={paper.id}>
+              <Card className="h-full hover:shadow-ambient hover:-translate-y-1 transition-all duration-300 border border-outline-variant/20 cursor-pointer group">
+                <CardHeader>
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant="secondary">{paper.date}</Badge>
+                    <Badge variant="provenance">Score: {paper.confidence}</Badge>
+                  </div>
+                  <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">{paper.title}</CardTitle>
+                  <CardDescription>{paper.authors}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {paper.tags.map((tag) => (
+                      <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {papers.map((paper) => (
-              <Link to={`/paper/${paper.id}`} key={paper.id}>
-                <Card className="h-full hover:shadow-ambient hover:-translate-y-1 transition-all duration-300 border border-outline-variant/20 cursor-pointer group">
-                  <CardHeader>
-                    <div className="flex justify-between items-start mb-2">
-                      <Badge variant="secondary">{formatDate(paper.createdAt)}</Badge>
-                      <Badge variant="provenance">
-                        {paper.confidence || 'Pending'}
-                      </Badge>
-                    </div>
-                    <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">{paper.title}</CardTitle>
-                    <CardDescription>{paper.authors.join(', ')}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      {paper.keywords.slice(0, 3).map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-                      ))}
-                      {paper.keywords.length > 3 && (
-                        <Badge variant="outline" className="text-xs">+{paper.keywords.length - 3}</Badge>
-                      )}
-                    </div>
-                    {paper.reviewCount !== undefined && (
-                      <p className="text-xs text-on-surface-variant mt-3">
-                        {paper.reviewCount} review{paper.reviewCount !== 1 ? 's' : ''}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-        
-        {meta && meta.total > meta.perPage && (
-          <div className="flex items-center justify-center gap-4 mt-10">
-            <p className="text-sm text-on-surface-variant">
-              Showing {papers.length} of {meta.total} papers
-            </p>
-          </div>
-        )}
+          ))}
+        </div>
       </section>
     </div>
   );

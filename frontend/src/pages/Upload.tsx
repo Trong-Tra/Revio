@@ -1,29 +1,23 @@
 import { useState, useRef, ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { UploadCloud, File, CheckCircle2, X, Loader2 } from 'lucide-react';
+import { UploadCloud, File, CheckCircle2, X } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
-import { papersApi } from '../api/client';
 
 export function Upload() {
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
   
   // Form state
   const [title, setTitle] = useState('');
   const [authors, setAuthors] = useState('');
   const [abstract, setAbstract] = useState('');
   const [keywords, setKeywords] = useState('');
-  const [field, setField] = useState('');
-  const [doi, setDoi] = useState('');
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -38,25 +32,13 @@ export function Upload() {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile.type === 'application/pdf') {
-        setFile(droppedFile);
-        setError(null);
-      } else {
-        setError('Only PDF files are allowed');
-      }
+      setFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      if (selectedFile.type === 'application/pdf') {
-        setFile(selectedFile);
-        setError(null);
-      } else {
-        setError('Only PDF files are allowed');
-      }
+      setFile(e.target.files[0]);
     }
   };
 
@@ -67,48 +49,24 @@ export function Upload() {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!file) {
-      setError('Please select a PDF file');
-      return;
-    }
-
-    if (!title || !authors || !abstract || !field) {
-      setError('Please fill in all required fields');
-      return;
-    }
-
+  const handleSubmit = () => {
+    // Mock upload - no backend connection
     setIsUploading(true);
-    setUploadProgress(0);
-    setError(null);
-
-    try {
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
-
-      const response = await papersApi.upload(file, {
-        title,
-        authors: authors.split(',').map(a => a.trim()),
-        abstract,
-        keywords: keywords.split(',').map(k => k.trim()),
-        field,
-        doi: doi || undefined,
-      });
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      // Navigate to the new paper after a short delay
-      setTimeout(() => {
-        navigate(`/paper/${response.data.id}`);
-      }, 500);
-    } catch (err) {
-      setIsUploading(false);
-      setUploadProgress(0);
-      setError(err instanceof Error ? err.message : 'Upload failed');
-    }
+    
+    // Simulate progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      setUploadProgress(progress);
+      if (progress >= 100) {
+        clearInterval(interval);
+        setTimeout(() => {
+          alert('Paper uploaded successfully! (Mock - no backend connected)');
+          setIsUploading(false);
+          setUploadProgress(0);
+        }, 500);
+      }
+    }, 200);
   };
 
   return (
@@ -119,12 +77,6 @@ export function Upload() {
           Submit your research for automated meta-agent analysis and community peer review.
         </p>
       </header>
-
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600">
-          {error}
-        </div>
-      )}
 
       <div className="space-y-8">
         {/* Drag & Drop Zone */}
@@ -204,7 +156,7 @@ export function Upload() {
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium">Uploading...</span>
+                      <span className="font-medium">Processing...</span>
                       <span className="text-primary">{uploadProgress}%</span>
                     </div>
                     <div className="w-full bg-surface-container-high rounded-full h-2">
@@ -228,9 +180,7 @@ export function Upload() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-on-surface">
-                Title <span className="text-red-500">*</span>
-              </label>
+              <label className="text-sm font-medium text-on-surface">Title</label>
               <Input 
                 placeholder="Paper title..." 
                 value={title}
@@ -241,8 +191,7 @@ export function Upload() {
             
             <div className="space-y-2">
               <label className="text-sm font-medium text-on-surface">
-                Authors <span className="text-red-500">*</span>
-                <span className="text-xs text-on-surface-variant font-normal ml-1">(comma separated)</span>
+                Authors <span className="text-xs text-on-surface-variant">(comma separated)</span>
               </label>
               <Input 
                 placeholder="e.g. John Doe, Jane Smith..." 
@@ -251,23 +200,9 @@ export function Upload() {
                 disabled={isUploading}
               />
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-on-surface">
-                Field <span className="text-red-500">*</span>
-              </label>
-              <Input 
-                placeholder="e.g. Computer Science, Physics, Biology..." 
-                value={field}
-                onChange={(e) => setField(e.target.value)}
-                disabled={isUploading}
-              />
-            </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-on-surface">
-                Abstract <span className="text-red-500">*</span>
-              </label>
+              <label className="text-sm font-medium text-on-surface">Abstract</label>
               <Textarea 
                 placeholder="Paper abstract..." 
                 className="min-h-[120px]"
@@ -279,8 +214,7 @@ export function Upload() {
             
             <div className="space-y-2">
               <label className="text-sm font-medium text-on-surface">
-                Keywords
-                <span className="text-xs text-on-surface-variant font-normal ml-1">(comma separated)</span>
+                Keywords <span className="text-xs text-on-surface-variant">(comma separated)</span>
               </label>
               <Input 
                 placeholder="e.g. Machine Learning, Neural Networks..." 
@@ -289,37 +223,14 @@ export function Upload() {
                 disabled={isUploading}
               />
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-on-surface">DOI</label>
-              <Input 
-                placeholder="e.g. 10.1038/s41586-023-00000-0" 
-                value={doi}
-                onChange={(e) => setDoi(e.target.value)}
-                disabled={isUploading}
-              />
-            </div>
             
             <div className="pt-6 border-t border-outline-variant/30 flex justify-end gap-4">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/')}
-                disabled={isUploading}
-              >
-                Cancel
-              </Button>
+              <Button variant="ghost" disabled={isUploading}>Save Draft</Button>
               <Button 
                 onClick={handleSubmit}
-                disabled={!file || !title || !authors || !abstract || !field || isUploading}
+                disabled={!file || isUploading}
               >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  'Submit for Review'
-                )}
+                {isUploading ? 'Processing...' : 'Submit for Review'}
               </Button>
             </div>
           </CardContent>
