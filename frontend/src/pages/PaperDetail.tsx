@@ -1,12 +1,60 @@
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Download, ExternalLink, CheckCircle2, AlertTriangle, MessageSquare } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, CheckCircle2, MessageSquare, Bot, Users, FileText } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { Link } from "react-router-dom";
 
+const mockPapers = [
+  {
+    id: "1",
+    title: "Latent Space Alignment in Large Multimodal Systems",
+    authors: "A. Chen, J. Doe, et al.",
+    doi: "10.48550/arXiv.2405.0122",
+    abstract:
+      "Exploring the convergence of latent representations between vision and language models using contrastive manifold alignment, with an emphasis on robust transfer and interpretability.",
+    confidence: 98,
+  },
+  {
+    id: "2",
+    title: "Algorithmic Transparency in Decentralized Governance",
+    authors: "Dr. Sarah K. Weber",
+    doi: "10.1038/synthetica",
+    abstract:
+      "An investigation into collective decision-making in DAOs and the impact of automated voting protocols on minority participation and governance outcomes.",
+    confidence: 94,
+  },
+  {
+    id: "3",
+    title: "Low-Latency Inference in Heterogeneous Edge Clusters",
+    authors: "L. Zhang, M. Saito",
+    doi: "10.1145/nips.2024.992",
+    abstract:
+      "Presenting a scheduling strategy for model parallelization across constrained IoT devices while maintaining inference quality under strict latency budgets.",
+    confidence: 91,
+  },
+];
+
 export function PaperDetail() {
   const { id } = useParams();
+  const paper = mockPapers.find((item) => item.id === id);
+
+  if (!paper) {
+    return (
+      <div className="min-h-screen pt-24 pb-12 px-6 max-w-3xl mx-auto">
+        <Link to="/" className="inline-flex items-center text-sm font-medium text-on-surface-variant hover:text-primary mb-8 transition-colors">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Discoveries
+        </Link>
+        <Card className="border border-outline-variant/30">
+          <CardHeader>
+            <CardTitle>Paper Not Found</CardTitle>
+            <CardDescription>No paper is mapped for id: {id}</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-6 max-w-7xl mx-auto">
@@ -21,13 +69,13 @@ export function PaperDetail() {
           <header className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <Badge variant="provenance">Verified by Meta-Agent</Badge>
-              <Badge variant="outline">DOI: 10.1038/s41586-023-00000-0</Badge>
+              <Badge variant="outline">DOI: {paper.doi}</Badge>
             </div>
             <h1 className="text-3xl md:text-4xl font-label font-bold text-on-surface mb-4 leading-tight">
-              Emergent Behaviors in Large Language Models
+              {paper.title}
             </h1>
             <p className="text-lg text-on-surface-variant">
-              Dr. Elena Rostova, Prof. James Maxwell, et al.
+              {paper.authors}
             </p>
           </header>
 
@@ -52,11 +100,7 @@ export function PaperDetail() {
               <CardTitle>Abstract</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-on-surface-variant leading-relaxed">
-                Large language models (LLMs) have demonstrated remarkable capabilities across a wide range of tasks. 
-                However, the mechanisms underlying their emergent behaviors remain poorly understood. In this paper, 
-                we propose a novel framework for analyzing the internal representations of LLMs...
-              </p>
+              <p className="text-on-surface-variant leading-relaxed">{paper.abstract}</p>
             </CardContent>
           </Card>
         </div>
@@ -72,9 +116,9 @@ export function PaperDetail() {
               <CardDescription>Based on automated methodology checks</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-5xl font-label font-bold text-primary mb-4">98%</div>
+              <div className="text-5xl font-label font-bold text-primary mb-4">{paper.confidence}%</div>
               <div className="w-full bg-surface-container-high rounded-full h-2 mb-4">
-                <div className="bg-gradient-to-r from-primary to-primary-container h-2 rounded-full w-[98%]"></div>
+                <div className="bg-gradient-to-r from-primary to-primary-container h-2 rounded-full" style={{ width: `${paper.confidence}%` }}></div>
               </div>
               <ul className="space-y-2 text-sm text-on-surface-variant">
                 <li className="flex justify-between"><span>Citations Verified</span> <span className="font-medium text-on-surface">142/142</span></li>
@@ -126,7 +170,7 @@ export function PaperDetail() {
               <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-sm">Dr. A. Turing</span>
-                  <Badge variant="secondary" className="text-[10px]">Reviewer</Badge>
+                  <Badge variant="secondary">Reviewer</Badge>
                 </div>
                 <p className="text-sm text-on-surface-variant line-clamp-2 mb-3">
                   The methodology is sound, but the conclusion regarding emergent properties needs more empirical backing...

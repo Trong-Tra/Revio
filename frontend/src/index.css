@@ -1,14 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL,GRAD,opsz@100..700,0..1,0,24&display=swap');
 @import "tailwindcss";
 
 @theme {
   --color-primary: #006b55;
   --color-primary-container: #00d4aa;
+  --color-primary-fixed: #55fcd0;
+  --color-primary-fixed-dim: #28dfb5;
+  --color-on-primary: #ffffff;
   --color-surface: #f9f9f9;
+  --color-surface-dim: #dadada;
   --color-surface-container-lowest: #ffffff;
   --color-surface-container-low: #f3f3f3;
   --color-surface-container: #eeeeee;
   --color-surface-container-high: #e8e8e8;
+  --color-surface-container-highest: #e2e2e2;
+  --color-surface-variant: #e2e2e2;
   --color-on-surface: #1a1c1c;
   --color-on-surface-variant: #3b4a44;
   --color-outline: #6b7a74;
@@ -24,4 +31,17 @@
 
 body {
   @apply bg-surface text-on-surface font-sans antialiased;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+
+.primary-gradient-cta {
+  background: linear-gradient(135deg, #006b55 0%, #00d4aa 100%);
+}
+
+.hero-gradient {
+  background: radial-gradient(circle at 50% -20%, rgba(0, 107, 85, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
 }

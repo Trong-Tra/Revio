@@ -1,37 +1,33 @@
 import { Link, useLocation } from "react-router-dom";
-import { Search, Bell, Settings, User } from "lucide-react";
-import { Button } from "../ui/Button";
-import { cn } from "../../lib/utils";
 
 export function TopNav() {
   const location = useLocation();
 
   const navItems = [
-    { name: "Discover", path: "/" },
-    { name: "My Library", path: "/library" },
-    { name: "Agent Settings", path: "/settings" },
+    { name: "Research", path: "/" },
+    { name: "AI Agents", path: "/settings" },
     { name: "Documentation", path: "/docs" },
+    { name: "Upload", path: "/upload" },
   ];
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-surface-container-lowest/80 backdrop-blur-[20px] border-b border-outline-variant/50">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-sm">
+      <div className="flex items-center justify-between px-6 py-3 max-w-full mx-auto">
         <div className="flex items-center gap-8">
-          <Link to="/" className="font-label font-bold text-xl tracking-tight text-primary">
-            The Digital Atelier
+          <Link to="/" className="text-xl font-bold tracking-tighter text-zinc-900 font-headline">
+            Digital Atelier
           </Link>
-          
-          <nav className="hidden md:flex items-center gap-1">
+
+          <nav className="hidden md:flex items-center gap-6 font-sans text-sm tracking-tight">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                className={
                   location.pathname === item.path
-                    ? "bg-surface-container-high text-on-surface"
-                    : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-                )}
+                    ? "text-emerald-700 font-semibold border-b-2 border-emerald-700 pb-1"
+                    : "text-zinc-500 hover:text-zinc-900 transition-colors duration-200"
+                }
               >
                 {item.name}
               </Link>
@@ -40,26 +36,23 @@ export function TopNav() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="relative hidden lg:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-            <input 
-              type="text" 
-              placeholder="Search papers, authors, agents..." 
-              className="pl-9 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
+          <div className="hidden sm:flex items-center px-3 py-1.5 bg-zinc-100 rounded-lg">
+            <span className="material-symbols-outlined text-zinc-400 text-lg mr-2">search</span>
+            <input
+              type="text"
+              placeholder="Search research..."
+              className="bg-transparent border-none focus:ring-0 text-xs w-48"
             />
           </div>
-          
-          <Button variant="ghost" size="icon" className="text-on-surface-variant">
-            <Bell className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-on-surface-variant">
-            <Settings className="w-5 h-5" />
-          </Button>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-white font-label font-bold text-sm ml-2 shadow-sm">
-            JD
-          </div>
+
+          <button className="material-symbols-outlined text-zinc-500 hover:text-emerald-700 transition-colors">notifications</button>
+          <button className="material-symbols-outlined text-zinc-500 hover:text-emerald-700 transition-colors">account_circle</button>
+          <button className="hidden lg:block px-4 py-2 text-sm font-medium text-emerald-700 border border-emerald-700/20 rounded-full hover:bg-emerald-50 transition-colors">
+            Sign In
+          </button>
         </div>
       </div>
+      <div className="bg-zinc-100 h-px w-full"></div>
     </header>
   );
 }
