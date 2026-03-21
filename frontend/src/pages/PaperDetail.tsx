@@ -46,49 +46,37 @@ const mockPapers = [
 
 export function PaperDetail() {
   const { id } = useParams();
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [openAspect, setOpenAspect] = useState<string | null>(null);
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
   const paper = mockPapers.find((item) => item.id === id);
   const ratingProgress = paper ? (paper.rating / 5) * 100 : 0;
 
-  const reviewAspects = [
+  const communityReviews = [
     {
-      key: "novelty-originality",
-      label: "Novelty and Originality",
-      score: "4/5",
-      detail: "The manuscript introduces a relevant framing with clear differentiation from common baselines.",
+      id: "review-1",
+      reviewer: "Dr. A. Turing",
+      role: "Senior Reviewer",
+      summary: "The methodology is sound, but the conclusion regarding emergent properties needs more empirical backing.",
+      fullText:
+        "The submission introduces a strong methodological baseline and demonstrates careful experimental design. I appreciate the effort to keep the setup reproducible and the discussion grounded in prior work. The central concern is that claims around emergent properties are currently broader than what the presented evidence can conclusively support. Additional ablations and broader evaluation across harder edge-case datasets would make the contribution more convincing. I still view this as a valuable and technically competent paper.",
     },
     {
-      key: "technical-rigour",
-      label: "Technical Content and Scientific Rigour",
-      score: "5/5",
-      detail: "Methods are well specified and reproducible, with robust controls and consistent statistical analysis.",
+      id: "review-2",
+      reviewer: "Prof. S. Williams",
+      role: "Community Reviewer",
+      summary: "Well-structured paper with strong rigor, but the presentation can better clarify assumptions and limitations.",
+      fullText:
+        "Overall, this is a high-quality and clearly motivated study. The technical rigor is strong, and the implementation details should support replication by most readers. My primary recommendation is to strengthen the limitations section and make assumptions explicit earlier in the paper. At present, assumptions are distributed across sections, which can make interpretation harder for a broader audience. Tightening that narrative would improve readability and reduce misinterpretation.",
     },
     {
-      key: "presentation",
-      label: "Quality of Presentation",
-      score: "4/5",
-      detail: "Writing is mostly clear and organized, with only minor improvements needed in figure annotation.",
-    },
-    {
-      key: "relevance-timeliness",
-      label: "Relevance and Timeliness",
-      score: "5/5",
-      detail: "The topic is highly relevant and aligns well with current research priorities and open problems.",
-    },
-    {
-      key: "strong-aspect",
-      label: "Strong Aspect",
-      score: "5/5",
-      detail: "Excellent experimental discipline and clear articulation of practical implications.",
-    },
-    {
-      key: "weak-aspect",
-      label: "Weak Aspect",
-      score: "3/5",
-      detail: "Comparisons against one additional strong baseline would strengthen confidence in generalization.",
+      id: "review-3",
+      reviewer: "R. Patel",
+      role: "Reviewer",
+      summary: "Promising results and practical relevance; recommends one stronger baseline and more error analysis.",
+      fullText:
+        "This work targets an important practical problem and presents promising empirical outcomes. I especially value the attempt to discuss deployment implications rather than focusing only on benchmark performance. To improve confidence in the conclusions, I recommend adding at least one stronger baseline and a deeper error analysis section. The current error discussion is directionally useful but brief. With those additions, the impact and persuasiveness of the paper would increase significantly.",
     },
   ];
+  const selectedReview = communityReviews.find((review) => review.id === selectedReviewId) ?? null;
 
   if (!paper) {
     return (
@@ -150,37 +138,6 @@ export function PaperDetail() {
             </div>
           </div>
 
-          <Card className="border border-outline-variant/30">
-            <CardHeader>
-              <CardTitle>Abstract</CardTitle>
-            </CardHeader>
-            <CardContent className="max-h-40 overflow-y-auto">
-              <p className="text-on-surface-variant leading-relaxed">{paper.abstract}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-outline-variant/30">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-on-surface-variant" />
-                Peer Review Community
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-sm">Dr. A. Turing</span>
-                  <Badge variant="secondary">Reviewer</Badge>
-                </div>
-                <p className="text-sm text-on-surface-variant line-clamp-2 mb-3">
-                  The methodology is sound, but the conclusion regarding emergent properties needs more empirical backing...
-                </p>
-                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setIsReviewModalOpen(true)}>
-                  Read Full Review
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Sidebar Area */}
@@ -265,8 +222,54 @@ export function PaperDetail() {
         </motion.div>
       </div>
 
+      <div className="mt-8 space-y-6">
+        <Card className="border border-outline-variant/30">
+          <CardHeader>
+            <CardTitle>Abstract</CardTitle>
+          </CardHeader>
+          <CardContent className="max-h-44 overflow-y-auto">
+            <p className="text-on-surface-variant leading-relaxed">{paper.abstract}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-outline-variant/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-on-surface-variant" />
+              Peer Review Community
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4 overflow-x-auto pb-2 pr-1 snap-x snap-mandatory">
+              {communityReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="w-72 h-80 shrink-0 snap-start p-4 bg-surface-container-low rounded-xl border border-outline-variant/50 flex flex-col"
+                >
+                  <div className="flex items-center justify-between mb-2 gap-3">
+                    <span className="font-medium text-sm">{review.reviewer}</span>
+                    <Badge variant="secondary">{review.role}</Badge>
+                  </div>
+                  <div className="h-32 overflow-y-auto mb-3">
+                    <p className="text-sm text-on-surface-variant leading-relaxed">{review.summary}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs mt-auto"
+                    onClick={() => setSelectedReviewId(review.id)}
+                  >
+                    Read Full Review
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <AnimatePresence>
-        {isReviewModalOpen && (
+        {selectedReview && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
             <motion.div
               className="absolute inset-0 bg-on-surface/60"
@@ -274,7 +277,7 @@ export function PaperDetail() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4, ease: premiumEase }}
-              onClick={() => setIsReviewModalOpen(false)}
+              onClick={() => setSelectedReviewId(null)}
             />
             <motion.div
               className="relative z-10 w-full max-w-xl bg-surface-container-lowest rounded-xl p-6 shadow-ambient"
@@ -286,45 +289,21 @@ export function PaperDetail() {
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-headline font-bold text-on-surface">Detailed Review</h3>
-                <Button variant="outline" size="sm" onClick={() => setIsReviewModalOpen(false)}>
+                <Button variant="outline" size="sm" onClick={() => setSelectedReviewId(null)}>
                   Close
                 </Button>
               </div>
-              <p className="text-sm text-on-surface-variant mb-5">
-                Click an aspect to inspect qualitative feedback.
-              </p>
 
-              <div className="space-y-3">
-                {reviewAspects.map((aspect) => {
-                  const isOpen = openAspect === aspect.key;
-
-                  return (
-                    <div key={aspect.key} className="bg-surface-container-low rounded-lg p-3">
-                      <button
-                        type="button"
-                        className="w-full flex items-center justify-between text-left"
-                        onClick={() => setOpenAspect(isOpen ? null : aspect.key)}
-                      >
-                        <span className="text-sm font-medium text-on-surface">{aspect.label}</span>
-                        <span className="text-xs font-label text-primary">{aspect.score}</span>
-                      </button>
-
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: premiumEase }}
-                            style={{ overflow: "hidden" }}
-                          >
-                            <p className="text-sm text-on-surface-variant pt-3">{aspect.detail}</p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
+              <div className="rounded-lg border border-outline-variant/40 bg-surface-container-low p-4">
+                <div className="mb-3">
+                  <p className="text-sm font-medium text-on-surface">{selectedReview.reviewer}</p>
+                  <p className="text-xs text-on-surface-variant">{selectedReview.role}</p>
+                </div>
+                <div className="max-h-80 overflow-y-auto pr-1">
+                  <p className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-line">
+                    {selectedReview.fullText}
+                  </p>
+                </div>
               </div>
             </motion.div>
           </div>
