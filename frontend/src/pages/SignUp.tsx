@@ -120,10 +120,9 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Name must be at least 2 characters',
                         },
                       })}
-                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface placeholder:text-white/80 focus:placeholder:text-on-surface-variant focus:text-on-surface focus:ring-1 focus:ring-primary/20 focus:bg-white transition-all outline-none ${
-                        errors.name ? 'ring-1 ring-red-500/30' : ''
+                      className={`w-full bg-surface-container-lowest border border-on-surface/40 rounded-lg px-4 py-4 text-on-surface focus:border-on-surface/60 transition-all outline-none ${
+                        errors.name ? 'border-red-500/40' : ''
                       }`}
-                      placeholder="Dr. Julian Thorne" 
                     />
                     {errors.name && (
                       <motion.span
@@ -137,7 +136,7 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block font-label text-xs font-semibold text-on-surface-variant uppercase tracking-widest ml-1" htmlFor="reg_email">Institutional Email</label>
+                    <label className="block font-label text-xs font-semibold text-on-surface-variant uppercase tracking-widest ml-1" htmlFor="reg_email">Email</label>
                     <input 
                       type="email" 
                       id="reg_email"
@@ -148,10 +147,9 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Invalid email address',
                         },
                       })}
-                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface placeholder:text-white/80 focus:placeholder:text-on-surface-variant focus:text-on-surface focus:ring-1 focus:ring-primary/20 focus:bg-white transition-all outline-none ${
-                        errors.email ? 'ring-1 ring-red-500/30' : ''
+                      className={`w-full bg-surface-container-lowest border border-on-surface/40 rounded-lg px-4 py-4 text-on-surface focus:border-on-surface/60 transition-all outline-none ${
+                        errors.email ? 'border-red-500/40' : ''
                       }`}
-                      placeholder="j.thorne@atelier.edu" 
                     />
                     {errors.email && (
                       <motion.span
@@ -165,7 +163,7 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block font-label text-xs font-semibold text-on-surface-variant uppercase tracking-widest ml-1" htmlFor="secret_key">Secret Key</label>
+                    <label className="block font-label text-xs font-semibold text-on-surface-variant uppercase tracking-widest ml-1" htmlFor="secret_key">Password</label>
                     <input 
                       type="password" 
                       id="secret_key"
@@ -176,10 +174,9 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                           message: 'Password must be at least 8 characters',
                         },
                       })}
-                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface font-mono placeholder:text-white/80 focus:placeholder:text-on-surface-variant focus:text-on-surface focus:ring-1 focus:ring-primary/20 focus:bg-white transition-all outline-none ${
-                        errors.password ? 'ring-1 ring-red-500/30' : ''
+                      className={`w-full bg-surface-container-lowest border border-on-surface/40 rounded-lg px-4 py-4 text-on-surface font-mono focus:border-on-surface/60 transition-all outline-none ${
+                        errors.password ? 'border-red-500/40' : ''
                       }`}
-                      placeholder="•••• •••• •••• ••••" 
                     />
                     {errors.password && (
                       <motion.span
@@ -193,7 +190,7 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block font-label text-xs font-semibold text-on-surface-variant uppercase tracking-widest ml-1" htmlFor="confirm_password">Confirm Secret Key</label>
+                    <label className="block font-label text-xs font-semibold text-on-surface-variant uppercase tracking-widest ml-1" htmlFor="confirm_password">Confirm Password</label>
                     <input 
                       type="password" 
                       id="confirm_password"
@@ -202,10 +199,9 @@ export default function SignUp({ setView }: { setView?: (v: ViewState) => void }
                         validate: (value) =>
                           value === password || 'Passwords do not match',
                       })}
-                      className={`w-full bg-surface-container-high border-none rounded-lg px-4 py-4 text-on-surface font-mono placeholder:text-white/80 focus:placeholder:text-on-surface-variant focus:text-on-surface focus:ring-1 focus:ring-primary/20 focus:bg-white transition-all outline-none ${
-                        errors.confirmPassword ? 'ring-1 ring-red-500/30' : ''
+                      className={`w-full bg-surface-container-lowest border border-on-surface/40 rounded-lg px-4 py-4 text-on-surface font-mono focus:border-on-surface/60 transition-all outline-none ${
+                        errors.confirmPassword ? 'border-red-500/40' : ''
                       }`}
-                      placeholder="•••• •••• •••• ••••" 
                     />
                     {errors.confirmPassword && (
                       <motion.span

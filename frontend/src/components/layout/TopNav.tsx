@@ -21,7 +21,7 @@ export function TopNav() {
       <div className="flex items-center justify-between px-6 py-3 max-w-full mx-auto">
         <div className="flex items-center gap-8">
           <Link to="/" className="text-xl font-bold tracking-tighter text-zinc-900 font-headline">
-            Revio
+            Rev<span className="text-emerald-700">i</span>o
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 font-sans text-sm tracking-tight">
