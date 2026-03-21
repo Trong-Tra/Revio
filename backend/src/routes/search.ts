@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Search papers by query
-router.get('/', asyncHandler(async (req, res) => {
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const { 
     q, 
     field, 
@@ -109,7 +109,7 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 // Get available fields
-router.get('/fields', asyncHandler(async (_req, res) => {
+router.get('/fields', asyncHandler(async (_req: Request, res: Response) => {
   const fields = await prisma.paper.groupBy({
     by: ['field'],
     _count: { field: true },
@@ -126,7 +126,7 @@ router.get('/fields', asyncHandler(async (_req, res) => {
 }));
 
 // Get trending keywords
-router.get('/keywords', asyncHandler(async (req, res) => {
+router.get('/keywords', asyncHandler(async (req: Request, res: Response) => {
   const { limit = '20' } = req.query;
   const limitNum = Math.min(100, parseInt(limit as string, 10));
 

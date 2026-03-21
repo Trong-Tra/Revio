@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Helper to transform agent config for response
 function transformAgent(agent: any, reputation?: any, skills?: any[]) {
@@ -32,7 +32,7 @@ function transformAgent(agent: any, reputation?: any, skills?: any[]) {
 }
 
 // List all agent configs
-router.get('/', asyncHandler(async (_req, res) => {
+router.get('/', asyncHandler(async (_req: Request, res: Response) => {
   const configs = await prisma.agentConfig.findMany({
     orderBy: [
       { isActive: 'desc' },
@@ -69,7 +69,7 @@ router.get('/', asyncHandler(async (_req, res) => {
 }));
 
 // Get active config (default for agents)
-router.get('/active', asyncHandler(async (_req, res) => {
+router.get('/active', asyncHandler(async (_req: Request, res: Response) => {
   const config = await prisma.agentConfig.findFirst({
     where: { isActive: true },
     orderBy: { version: 'desc' }
@@ -98,8 +98,8 @@ router.get('/active', asyncHandler(async (_req, res) => {
 }));
 
 // Get config by ID
-router.get('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   const config = await prisma.agentConfig.findUnique({
     where: { id }
@@ -128,7 +128,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 // Create new config
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/', asyncHandler(async (req: Request, res: Response) => {
   const config = await prisma.agentConfig.create({
     data: req.body
   });
@@ -140,8 +140,8 @@ router.post('/', asyncHandler(async (req, res) => {
 }));
 
 // Update config
-router.patch('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.patch('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   const config = await prisma.agentConfig.update({
     where: { id },
@@ -155,8 +155,8 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 }));
 
 // Delete config
-router.delete('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   await prisma.agentConfig.delete({ where: { id } });
 
@@ -167,8 +167,8 @@ router.delete('/:id', asyncHandler(async (req, res) => {
 }));
 
 // Activate config (deactivate others)
-router.post('/:id/activate', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.post('/:id/activate', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   await prisma.$transaction([
     prisma.agentConfig.updateMany({

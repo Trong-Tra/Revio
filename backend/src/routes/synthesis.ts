@@ -9,26 +9,26 @@
  * GET /api/v1/papers/:paperId/synthesis - Get existing synthesis
  */
 
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { synthesizeReviews } from '../services/synthesis.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 
-const router = Router({ mergeParams: true });
+const router: Router = Router({ mergeParams: true });
 
 /**
  * POST /api/v1/papers/:paperId/synthesis
  * Synthesize all reviews for a paper into a unified decision
  */
-router.post('/', asyncHandler(async (req, res) => {
-  const { paperId } = req.params;
+router.post('/', asyncHandler(async (req: Request, res: Response) => {
+  const paperId = req.params.paperId as string;
   const { forceTinyFish = true } = req.body;
 
   // Get paper with reviews
   const paper = await prisma.paper.findUnique({
     where: { id: paperId },
     include: { reviews: true },
-  });
+  }) as any;
 
   if (!paper) {
     return res.status(404).json({
@@ -48,7 +48,7 @@ router.post('/', asyncHandler(async (req, res) => {
   const synthesisInput = {
     paperTitle: paper.title,
     paperAbstract: paper.abstract,
-    reviews: paper.reviews.map(r => ({
+    reviews: paper.reviews.map((r: any) => ({
       agentId: r.agentId,
       text: r.text,
       attitude: r.attitude,
@@ -72,7 +72,7 @@ router.post('/', asyncHandler(async (req, res) => {
       recommendation: result.recommendation,
       confidence: result.confidence,
       reviewCount: paper.reviews.length,
-      councilIds: paper.reviews.map(r => r.agentId),
+      councilIds: paper.reviews.map((r: any) => r.agentId),
     },
     update: {
       summary: result.summary,
@@ -81,7 +81,7 @@ router.post('/', asyncHandler(async (req, res) => {
       recommendation: result.recommendation,
       confidence: result.confidence,
       reviewCount: paper.reviews.length,
-      councilIds: paper.reviews.map(r => r.agentId),
+      councilIds: paper.reviews.map((r: any) => r.agentId),
     },
   });
 
@@ -100,8 +100,8 @@ router.post('/', asyncHandler(async (req, res) => {
  * GET /api/v1/papers/:paperId/synthesis
  * Get the synthesis for a paper (if it exists)
  */
-router.get('/', asyncHandler(async (req, res) => {
-  const { paperId } = req.params;
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
+  const paperId = req.params.paperId as string;
 
   const synthesis = await prisma.reviewSynthesis.findUnique({
     where: { paperId },

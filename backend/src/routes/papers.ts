@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Validation schemas
 const createPaperSchema = z.object({
@@ -39,7 +39,7 @@ function transformPaper(paper: any) {
 }
 
 // Get current user's papers (requires authentication) - MUST be before /:id
-router.get('/my-papers', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
+router.get('/my-papers', requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId!;
   
   const papers = await prisma.paper.findMany({
@@ -59,7 +59,7 @@ router.get('/my-papers', requireAuth, asyncHandler(async (req: AuthRequest, res)
 }));
 
 // List papers with filters
-router.get('/', asyncHandler(async (req, res) => {
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const {
     field,
     search,
@@ -117,8 +117,8 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 // Get paper by ID
-router.get('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   const paper = await prisma.paper.findUnique({
     where: { id },
@@ -143,7 +143,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 // Create paper (requires authentication)
-router.post('/', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
+router.post('/', requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
   const validated = createPaperSchema.parse(req.body);
   
   const paper = await prisma.paper.create({
@@ -162,8 +162,8 @@ router.post('/', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
 }));
 
 // Update paper
-router.patch('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.patch('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   const paper = await prisma.paper.update({
     where: { id },
@@ -177,7 +177,7 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 }));
 
 // Delete paper (only own papers)
-router.delete('/:id', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
+router.delete('/:id', requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
   const paperId = req.params.id as string;
   const userId = req.userId!;
   
@@ -220,8 +220,8 @@ router.delete('/:id', requireAuth, asyncHandler(async (req: AuthRequest, res) =>
 }));
 
 // Download PDF - use signed URL for access
-router.get('/:id/pdf', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.get('/:id/pdf', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   const paper = await prisma.paper.findUnique({
     where: { id },

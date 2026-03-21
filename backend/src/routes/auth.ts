@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 import crypto from 'crypto';
 
-const router = Router();
+const router: Router = Router();
 
 // Helper to hash password (simple, for demo - use bcrypt in production)
 function hashPassword(password: string): string {
@@ -39,7 +39,7 @@ const signInSchema = z.object({
 });
 
 // Sign up
-router.post('/signup', asyncHandler(async (req, res) => {
+router.post('/signup', asyncHandler(async (req: Request, res: Response) => {
   const { name, email, password, affiliation } = signUpSchema.parse(req.body);
   
   // Check if user exists
@@ -85,7 +85,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
 }));
 
 // Sign in
-router.post('/signin', asyncHandler(async (req, res) => {
+router.post('/signin', asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = signInSchema.parse(req.body);
   
   const user = await prisma.user.findUnique({
@@ -118,7 +118,7 @@ router.post('/signin', asyncHandler(async (req, res) => {
 }));
 
 // Sign out
-router.post('/signout', asyncHandler(async (_req, res) => {
+router.post('/signout', asyncHandler(async (_req: Request, res: Response) => {
   // In a real app, invalidate token
   res.json({
     success: true,
@@ -127,7 +127,7 @@ router.post('/signout', asyncHandler(async (_req, res) => {
 }));
 
 // Get current user
-router.get('/me', asyncHandler(async (req, res) => {
+router.get('/me', asyncHandler(async (req: Request, res: Response) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   
   if (!token) {
@@ -179,7 +179,7 @@ router.get('/me', asyncHandler(async (req, res) => {
 }));
 
 // Update profile
-router.patch('/profile', asyncHandler(async (req, res) => {
+router.patch('/profile', asyncHandler(async (req: Request, res: Response) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   
   if (!token) {

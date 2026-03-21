@@ -1,4 +1,4 @@
-import multer from 'multer';
+import multer, { Multer } from 'multer';
 import path from 'path';
 
 // Configure multer for memory storage (we'll upload to S3/MinIO)
@@ -22,4 +22,4 @@ const upload = multer({
   },
 });
 
-export const uploadSingle = upload.single('pdf');
+export const uploadSingle: ReturnType<Multer['single']> = upload.single('pdf');

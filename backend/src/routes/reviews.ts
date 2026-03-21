@@ -1,10 +1,12 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
+
+const router: Router = Router();
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 import { ReviewAttitude } from '@prisma/client';
 
-const router = Router();
+
 
 // Validation schemas for new simplified review
 const createReviewSchema = z.object({
@@ -15,7 +17,7 @@ const createReviewSchema = z.object({
 });
 
 // List all reviews (with optional paper filter)
-router.get('/', asyncHandler(async (req, res) => {
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const { paperId, agentId, attitude, page = '1', perPage = '20' } = req.query;
   
   const pageNum = parseInt(page as string, 10);
@@ -54,8 +56,8 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 // Get review by ID
-router.get('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   const review = await prisma.review.findUnique({
     where: { id },
@@ -79,7 +81,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 // Submit a review (human or AI)
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/', asyncHandler(async (req: Request, res: Response) => {
   const validated = createReviewSchema.parse(req.body);
   
   // Verify paper exists
@@ -109,8 +111,8 @@ router.post('/', asyncHandler(async (req, res) => {
 }));
 
 // Update review
-router.patch('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.patch('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   const review = await prisma.review.update({
     where: { id },
@@ -124,8 +126,8 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 }));
 
 // Delete review
-router.delete('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   await prisma.review.delete({ where: { id } });
 

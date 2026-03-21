@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
@@ -7,7 +7,7 @@ import { extractSkills } from '../services/skillExtractor.js';
 import { calculateMatch, canReview as canReviewSkills } from '../services/skillMatcher.js';
 import { getTierProgress, TIER_REQUIREMENTS } from '../services/reputation.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Validation schemas
 const checkQualificationSchema = z.object({
@@ -39,7 +39,7 @@ const matchSkillsSchema = z.object({
  * POST /api/v1/qualifications/check
  * Check if an agent can review a paper
  */
-router.post('/check', asyncHandler(async (req, res) => {
+router.post('/check', asyncHandler(async (req: Request, res: Response) => {
   const { agentId, paperId } = checkQualificationSchema.parse(req.body);
   
   const result = await canReview(agentId, paperId);
@@ -54,7 +54,7 @@ router.post('/check', asyncHandler(async (req, res) => {
  * POST /api/v1/qualifications/council
  * Form an agent council for a paper
  */
-router.post('/council', asyncHandler(async (req, res) => {
+router.post('/council', asyncHandler(async (req: Request, res: Response) => {
   const { paperId, councilSize } = formCouncilSchema.parse(req.body);
   
   const result = await formCouncil(paperId, { councilSize });
@@ -69,8 +69,8 @@ router.post('/council', asyncHandler(async (req, res) => {
  * GET /api/v1/qualifications/papers/:paperId/agents
  * Get all qualified agents for a paper
  */
-router.get('/papers/:paperId/agents', asyncHandler(async (req, res) => {
-  const { paperId } = req.params;
+router.get('/papers/:paperId/agents', asyncHandler(async (req: Request, res: Response) => {
+  const paperId = req.params.paperId as string;
   
   const agents = await getQualifiedAgents(paperId);
   
@@ -85,7 +85,7 @@ router.get('/papers/:paperId/agents', asyncHandler(async (req, res) => {
  * POST /api/v1/qualifications/skills/extract
  * Extract skills from paper content
  */
-router.post('/skills/extract', asyncHandler(async (req, res) => {
+router.post('/skills/extract', asyncHandler(async (req: Request, res: Response) => {
   const { title, abstract, keywords } = extractSkillsSchema.parse(req.body);
   
   const result = extractSkills(title, abstract, keywords);
@@ -100,7 +100,7 @@ router.post('/skills/extract', asyncHandler(async (req, res) => {
  * POST /api/v1/qualifications/skills/match
  * Calculate skill match between paper and agent
  */
-router.post('/skills/match', asyncHandler(async (req, res) => {
+router.post('/skills/match', asyncHandler(async (req: Request, res: Response) => {
   const { paperSkills, agentSkills } = matchSkillsSchema.parse(req.body);
   
   const result = calculateMatch(paperSkills, agentSkills);
@@ -115,8 +115,8 @@ router.post('/skills/match', asyncHandler(async (req, res) => {
  * GET /api/v1/qualifications/agents/:agentId/tier-progress
  * Get tier progress for an agent
  */
-router.get('/agents/:agentId/tier-progress', asyncHandler(async (req, res) => {
-  const { agentId } = req.params;
+router.get('/agents/:agentId/tier-progress', asyncHandler(async (req: Request, res: Response) => {
+  const agentId = req.params.agentId as string;
   
   const agent = await prisma.agentReputation.findUnique({
     where: { agentId },
@@ -147,7 +147,7 @@ router.get('/agents/:agentId/tier-progress', asyncHandler(async (req, res) => {
  * GET /api/v1/qualifications/tier-requirements
  * Get tier requirements
  */
-router.get('/tier-requirements', asyncHandler(async (_req, res) => {
+router.get('/tier-requirements', asyncHandler(async (_req: Request, res: Response) => {
   res.json({
     success: true,
     data: TIER_REQUIREMENTS,
@@ -158,8 +158,8 @@ router.get('/tier-requirements', asyncHandler(async (_req, res) => {
  * POST /api/v1/papers/:id/extract-skills
  * Extract and save skills for a paper
  */
-router.post('/papers/:id/extract-skills', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.post('/papers/:id/extract-skills', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   const paper = await prisma.paper.findUnique({
     where: { id },

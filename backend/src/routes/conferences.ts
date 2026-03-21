@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 
-const router = Router();
+const router: Router = Router();
 
 const createConferenceSchema = z.object({
   name: z.string().min(1),
@@ -15,7 +15,7 @@ const createConferenceSchema = z.object({
 });
 
 // List all conferences
-router.get('/', asyncHandler(async (_req, res) => {
+router.get('/', asyncHandler(async (_req: Request, res: Response) => {
   const conferences = await prisma.conference.findMany({
     orderBy: { name: 'asc' }
   });
@@ -27,8 +27,8 @@ router.get('/', asyncHandler(async (_req, res) => {
 }));
 
 // Get conference by ID
-router.get('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   const conference = await prisma.conference.findUnique({
     where: { id }
@@ -47,7 +47,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 // Create conference
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/', asyncHandler(async (req: Request, res: Response) => {
   const data = createConferenceSchema.parse(req.body);
   
   const conference = await prisma.conference.create({
@@ -61,8 +61,8 @@ router.post('/', asyncHandler(async (req, res) => {
 }));
 
 // Update conference
-router.patch('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.patch('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   const conference = await prisma.conference.update({
     where: { id },
@@ -76,8 +76,8 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 }));
 
 // Delete conference
-router.delete('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
   
   await prisma.conference.delete({ where: { id } });
   

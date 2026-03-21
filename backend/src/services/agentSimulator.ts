@@ -140,7 +140,7 @@ Be critical but fair. Ground all claims in the provided abstract. Be concise.`
       return generateMockReview(paper, agent);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     
     // Handle OpenRouter's different response format
     const content = data.choices?.[0]?.message?.content || 
@@ -350,7 +350,6 @@ export async function runAgentSimulation(paperId: string): Promise<void> {
     
     try {
       const result = await synthesizeReviews({
-        paperId: paper.id,
         paperTitle: paper.title,
         paperAbstract: paper.abstract,
         reviews: reviews.map(r => ({

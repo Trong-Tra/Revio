@@ -5,11 +5,34 @@
  * Combines: skill matching + tier access + rate limiting
  */
 
-import { AgentTier, ConferenceTier, PrismaClient } from '@prisma/client';
+import { AgentTier, ConferenceTier, PrismaClient, AgentSkill, AgentReputation } from '@prisma/client';
 import { calculateMatch, rankAgentsForPaper } from './skillMatcher.js';
 import { canAccessTier, checkRateLimit, TIER_LIMITS } from './reputation.js';
 
 const prisma = new PrismaClient();
+
+// Extended agent type with relations
+type AgentWithRelations = {
+  id: string;
+  name: string;
+  agentType: string;
+  skillsUrl: string;
+  reviewUrl: string;
+  fieldsUrl: string;
+  ethicsUrl: string;
+  tone: string;
+  systemPrompt: string;
+  fields: string[];
+  version: number;
+  isActive: boolean;
+  description: string | null;
+  createdBy: string | null;
+  apiKey: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  skills: AgentSkill[];
+  reputation: AgentReputation | null;
+};
 
 export interface QualificationResult {
   allowed: boolean;
@@ -58,12 +81,10 @@ export async function canReview(
   const agent = await prisma.agentConfig.findUnique({
     where: { id: agentId },
     include: {
-      // @ts-ignore - we know these exist
       skills: true,
-      // @ts-ignore
       reputation: true,
     },
-  });
+  }) as unknown as AgentWithRelations | null;
   
   if (!agent) {
     return { allowed: false, reason: 'Agent not found', matchScore: 0 };
@@ -91,7 +112,6 @@ export async function canReview(
   }
   
   // Get agent reputation
-  // @ts-ignore
   const reputation = agent.reputation;
   if (!reputation) {
     return { allowed: false, reason: 'Agent reputation not found', matchScore: 0 };
@@ -129,7 +149,6 @@ export async function canReview(
     };
   }
 
-  // @ts-ignore
   const match = calculateMatch(paperSkills, agent.skills);
   
   if (!match.qualified) {
@@ -196,12 +215,10 @@ export async function formCouncil(
   const agents = await prisma.agentConfig.findMany({
     where: { isActive: true },
     include: {
-      // @ts-ignore
       skills: true,
-      // @ts-ignore
       reputation: true,
     },
-  });
+  }) as unknown as AgentWithRelations[];
   
   // Filter and score agents
   const qualified: Array<{
@@ -214,7 +231,6 @@ export async function formCouncil(
   const notAssigned: Array<{ agentId: string; reason: string }> = [];
   
   for (const agent of agents) {
-    // @ts-ignore
     const reputation = agent.reputation;
     if (!reputation) continue;
     
@@ -229,7 +245,6 @@ export async function formCouncil(
     }
     
     // Check skill match
-    // @ts-ignore
     const match = calculateMatch(paperSkills, agent.skills);
     if (!match.qualified) {
       notAssigned.push({
@@ -309,10 +324,9 @@ export async function getQualifiedAgents(
   const agents = await prisma.agentConfig.findMany({
     where: { isActive: true },
     include: {
-      // @ts-ignore
       reputation: true,
     },
-  });
+  }) as unknown as AgentWithRelations[];
   
   const results: Array<{
     agentId: string;
@@ -328,7 +342,6 @@ export async function getQualifiedAgents(
         agentId: agent.id,
         name: agent.name,
         matchScore: result.matchScore,
-        // @ts-ignore
         tier: agent.reputation?.tier || AgentTier.ENTRY,
       });
     }

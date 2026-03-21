@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { uploadSingle } from '../middleware/upload.js';
 import { storage } from '../lib/storage.js';
 import { prisma } from '../lib/prisma.js';
@@ -7,7 +7,7 @@ import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { z } from 'zod';
 import { extractConferenceInfo, upsertConferenceFromExtraction } from '../services/conferenceDiscovery.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Validation schema for metadata
 const uploadSchema = z.object({
@@ -25,7 +25,7 @@ const uploadSchema = z.object({
 router.post('/',
   requireAuth,
   uploadSingle,
-  asyncHandler(async (req: AuthRequest, res) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!req.file) {
       const error = new Error('PDF file is required');
       (error as any).statusCode = 400;
