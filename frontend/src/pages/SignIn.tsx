@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Lock, Mail, GraduationCap } from 'lucide-react';
+import { ArrowRight, Lock, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { motion } from 'motion/react';
@@ -148,29 +148,6 @@ export default function SignIn({ setView }: { setView?: (v: ViewState) => void }
                 </div>
               </form>
 
-              <div className="relative my-10 flex items-center">
-                <div className="flex-grow border-t border-outline-variant/20"></div>
-                <span className="flex-shrink mx-4 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Verified Identities</span>
-                <div className="flex-grow border-t border-outline-variant/20"></div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex items-center justify-center gap-3 py-3 border border-outline-variant/20 rounded-lg hover:bg-surface-container-low transition-colors group"
-                >
-                  <span className="font-label text-xs uppercase tracking-tight text-on-surface-variant font-medium">Google</span>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex items-center justify-center gap-3 py-3 border border-outline-variant/20 rounded-lg hover:bg-surface-container-low transition-colors group"
-                >
-                  <GraduationCap className="w-4 h-4 text-on-surface-variant" />
-                  <span className="font-label text-xs uppercase tracking-tight text-on-surface-variant font-medium">ORCID</span>
-                </motion.button>
-              </div>
             </div>
 
             <div className="bg-surface-container-low/50 p-6 flex justify-center border-t border-outline-variant/20">
