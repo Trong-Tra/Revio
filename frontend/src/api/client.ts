@@ -323,6 +323,7 @@ export const papersApi = {
       field: string;
       doi?: string;
       conferenceId?: string;
+      conferenceUrl?: string;
     }
   ): Promise<ApiResponse<Paper>> => {
     const formData = new FormData();
@@ -334,6 +335,7 @@ export const papersApi = {
     formData.append('field', metadata.field);
     if (metadata.doi) formData.append('doi', metadata.doi);
     if (metadata.conferenceId) formData.append('conferenceId', metadata.conferenceId);
+    if (metadata.conferenceUrl) formData.append('conferenceUrl', metadata.conferenceUrl);
 
     const token = getToken();
     const response = await fetch(`${API_BASE_URL}/upload`, {

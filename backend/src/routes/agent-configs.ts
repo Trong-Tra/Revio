@@ -1,66 +1,70 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 
 const router = Router();
 
-// Validation schemas
-const createConfigSchema = z.object({
-  name: z.string().min(1),
-  agentType: z.enum(['REVIEWER', 'ANALYST', 'CURATOR']).default('REVIEWER'),
-  skillsUrl: z.string().default('/SKILL.md'),
-  reviewUrl: z.string().default('/REVIEW.md'),
-  fieldsUrl: z.string().default('/FIELDS.md'),
-  ethicsUrl: z.string().default('/ETHICS.md'),
-  skillsMarkdown: z.string().min(1),
-  tone: z.enum(['Academic', 'Constructive', 'Strict', 'Encouraging']).default('Academic'),
-  systemPrompt: z.string().min(1),
-  fields: z.array(z.string()).default([]),
-  description: z.string().optional(),
-});
-
-const updateConfigSchema = z.object({
-  skillsMarkdown: z.string().optional(),
-  tone: z.enum(['Academic', 'Constructive', 'Strict', 'Encouraging']).optional(),
-  systemPrompt: z.string().optional(),
-  isActive: z.boolean().optional(),
-  fields: z.array(z.string()).optional(),
-  description: z.string().optional(),
-});
-
-// Helper to transform agent with reputation
-function transformAgent(agent: any) {
+// Helper to transform agent config for response
+function transformAgent(agent: any, reputation?: any, skills?: any[]) {
   return {
-    ...agent,
-    reputation: agent.reputation || {
+    id: agent.id,
+    name: agent.name,
+    agentType: agent.agentType,
+    skillsUrl: agent.skillsUrl,
+    reviewUrl: agent.reviewUrl,
+    fieldsUrl: agent.fieldsUrl,
+    ethicsUrl: agent.ethicsUrl,
+    tone: agent.tone,
+    systemPrompt: agent.systemPrompt,
+    fields: agent.fields,
+    version: agent.version,
+    isActive: agent.isActive,
+    description: agent.description,
+    createdAt: agent.createdAt,
+    reputation: reputation || {
       tier: 'ENTRY',
       reviewCount: 0,
       accuracyScore: 0,
       overallReputation: 0,
     },
-    skills: agent.skills || [],
+    skills: skills || [],
   };
 }
 
 // List all agent configs
 router.get('/', asyncHandler(async (_req, res) => {
   const configs = await prisma.agentConfig.findMany({
-    include: {
-      // @ts-ignore
-      reputation: true,
-      // @ts-ignore
-      skills: true,
-    },
     orderBy: [
       { isActive: 'desc' },
       { createdAt: 'desc' }
     ]
   });
 
+  // Fetch reputation and skills for each config
+  const agentIds = configs.map(c => c.id);
+  const [reputations, skills] = await Promise.all([
+    prisma.agentReputation.findMany({
+      where: { agentId: { in: agentIds } }
+    }),
+    prisma.agentSkill.findMany({
+      where: { agentId: { in: agentIds } }
+    })
+  ]);
+
+  const reputationMap = new Map(reputations.map(r => [r.agentId, r]));
+  const skillsMap = new Map();
+  skills.forEach(s => {
+    if (!skillsMap.has(s.agentId)) skillsMap.set(s.agentId, []);
+    skillsMap.get(s.agentId).push(s);
+  });
+
   res.json({
     success: true,
-    data: configs.map(transformAgent)
+    data: configs.map(config => transformAgent(
+      config,
+      reputationMap.get(config.id),
+      skillsMap.get(config.id)
+    ))
   });
 }));
 
@@ -68,12 +72,6 @@ router.get('/', asyncHandler(async (_req, res) => {
 router.get('/active', asyncHandler(async (_req, res) => {
   const config = await prisma.agentConfig.findFirst({
     where: { isActive: true },
-    include: {
-      // @ts-ignore
-      reputation: true,
-      // @ts-ignore
-      skills: true,
-    },
     orderBy: { version: 'desc' }
   });
 
@@ -83,9 +81,19 @@ router.get('/active', asyncHandler(async (_req, res) => {
     throw error;
   }
 
+  // Fetch reputation and skills
+  const [reputation, skills] = await Promise.all([
+    prisma.agentReputation.findUnique({
+      where: { agentId: config.id }
+    }),
+    prisma.agentSkill.findMany({
+      where: { agentId: config.id }
+    })
+  ]);
+
   res.json({
     success: true,
-    data: transformAgent(config)
+    data: transformAgent(config, reputation, skills)
   });
 }));
 
@@ -94,13 +102,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
   
   const config = await prisma.agentConfig.findUnique({
-    where: { id },
-    include: {
-      // @ts-ignore
-      reputation: true,
-      // @ts-ignore
-      skills: true,
-    }
+    where: { id }
   });
 
   if (!config) {
@@ -109,30 +111,26 @@ router.get('/:id', asyncHandler(async (req, res) => {
     throw error;
   }
 
+  // Fetch reputation and skills
+  const [reputation, skills] = await Promise.all([
+    prisma.agentReputation.findUnique({
+      where: { agentId: config.id }
+    }),
+    prisma.agentSkill.findMany({
+      where: { agentId: config.id }
+    })
+  ]);
+
   res.json({
     success: true,
-    data: transformAgent(config)
+    data: transformAgent(config, reputation, skills)
   });
 }));
 
 // Create new config
 router.post('/', asyncHandler(async (req, res) => {
-  const validated = createConfigSchema.parse(req.body);
-  
   const config = await prisma.agentConfig.create({
-    data: {
-      ...validated,
-      version: 1,
-      isActive: false,
-    }
-  });
-  
-  // Create initial reputation record
-  await prisma.agentReputation.create({
-    data: {
-      agentId: config.id,
-      tier: 'ENTRY',
-    }
+    data: req.body
   });
 
   res.status(201).json({
@@ -141,82 +139,18 @@ router.post('/', asyncHandler(async (req, res) => {
   });
 }));
 
-// Update config (creates new version)
-router.put('/:id', asyncHandler(async (req, res) => {
+// Update config
+router.patch('/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const validated = updateConfigSchema.parse(req.body);
   
-  const current = await prisma.agentConfig.findUnique({
-    where: { id }
+  const config = await prisma.agentConfig.update({
+    where: { id },
+    data: req.body
   });
-  
-  if (!current) {
-    const error = new Error('Agent config not found');
-    (error as any).statusCode = 404;
-    throw error;
-  }
-
-  const config = await prisma.agentConfig.create({
-    data: {
-      name: current.name,
-      agentType: current.agentType,
-      skillsUrl: current.skillsUrl,
-      reviewUrl: current.reviewUrl,
-      fieldsUrl: current.fieldsUrl,
-      ethicsUrl: current.ethicsUrl,
-      tone: validated.tone || current.tone,
-      systemPrompt: validated.systemPrompt || current.systemPrompt,
-      fields: validated.fields || current.fields,
-      description: validated.description || current.description,
-      version: current.version + 1,
-      isActive: validated.isActive ?? false,
-    }
-  });
-
-  if (config.isActive) {
-    await prisma.agentConfig.updateMany({
-      where: { 
-        name: current.name, 
-        id: { not: config.id },
-        isActive: true 
-      },
-      data: { isActive: false }
-    });
-  }
 
   res.json({
     success: true,
     data: config
-  });
-}));
-
-// Activate a config version
-router.post('/:id/activate', asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  
-  const config = await prisma.agentConfig.findUnique({
-    where: { id }
-  });
-  
-  if (!config) {
-    const error = new Error('Agent config not found');
-    (error as any).statusCode = 404;
-    throw error;
-  }
-
-  await prisma.agentConfig.updateMany({
-    where: { name: config.name, isActive: true },
-    data: { isActive: false }
-  });
-
-  const updated = await prisma.agentConfig.update({
-    where: { id },
-    data: { isActive: true }
-  });
-
-  res.json({
-    success: true,
-    data: updated
   });
 }));
 
@@ -229,6 +163,30 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: null
+  });
+}));
+
+// Activate config (deactivate others)
+router.post('/:id/activate', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  await prisma.$transaction([
+    prisma.agentConfig.updateMany({
+      data: { isActive: false }
+    }),
+    prisma.agentConfig.update({
+      where: { id },
+      data: { isActive: true, version: { increment: 1 } }
+    })
+  ]);
+
+  const config = await prisma.agentConfig.findUnique({
+    where: { id }
+  });
+
+  res.json({
+    success: true,
+    data: config
   });
 }));
 

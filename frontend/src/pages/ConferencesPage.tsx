@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   Calendar, 
   MapPin, 
@@ -9,98 +9,91 @@ import {
   Star, 
   ArrowUpRight, 
   ChevronRight,
-  Search,
-  Filter
+  Loader2,
+  Globe
 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const conferences = [
-  {
-    id: "neurips-2024",
-    title: "NeurIPS 2024",
-    status: "OPEN",
-    date: "Dec 10 - Dec 15",
-    location: "Vancouver, Canada",
-    description: "Focusing on the next generation of neural information processing systems and collaborative AI agents in deep research.",
-    attendees: "+12k",
-    timeLeft: "6 Days Left",
-    featured: false,
-    avatars: [
-      "https://picsum.photos/seed/p1/100/100",
-      "https://picsum.photos/seed/p2/100/100"
-    ]
-  },
-  {
-    id: "icml-2024",
-    title: "ICML 2024",
-    status: "CLOSE",
-    date: "July 21 - July 27",
-    location: "Vienna, Austria",
-    description: "Reviews in progress. The 41st International Conference on Machine Learning brings together experts across the globe.",
-    idCode: "ML-0482-SYN",
-    featured: false
-  },
-  {
-    id: "cvpr-2024",
-    title: "CVPR 2024",
-    status: "ARCHIEVE",
-    date: "June 17 - June 21",
-    location: "Seattle, USA",
-    description: "Archives now available in the documentation library. Submissions for 2024 cycle are fully concluded.",
-    featured: false,
-    isArchived: true
-  },
-  {
-    id: "rss-2025",
-    title: "RSS 2025",
-    status: "OPEN",
-    date: "August 05 - August 10",
-    location: "Tokyo, Japan",
-    description: "Robotics: Science and Systems. A high-bandwidth symposium focusing on the future of autonomous embodiment and kinetic AI.",
-    featured: true
-  },
-  {
-    id: "siggraph-2024",
-    title: "SIGGRAPH 2024",
-    status: "UP COMING",
-    date: "July 28 - Aug 01",
-    location: "Denver, USA",
-    description: "The premier conference on computer graphics and interactive techniques, exploring the intersection of generative AI and vision.",
-    featured: false,
-    earlyBird: true
-  },
-  {
-    id: "icra-2025",
-    title: "ICRA 2025",
-    status: "UP COMING",
-    date: "May 19 - May 23",
-    location: "Atlanta, USA",
-    description: "Technical session proposals are currently under heavy vetting for the 2025 International Conference on Robotics and Automation.",
-    featured: false,
-    progress: 65
-  }
-];
+import { useConferences } from "../hooks/useConferences";
 
 const researchAreas = ["AI", "ML", "Robotics", "Systems", "Vision", "NLP"];
-const statusFilters = ["OPEN", "CLOSE", "UP COMING", "ARCHIEVE"] as const;
+const statusFilters = ["OPEN", "CLOSE", "UP COMING", "ARCHIVE"] as const;
 
 type ConferenceStatus = (typeof statusFilters)[number];
 
+// Map conference tier to status for display
+function getConferenceStatus(tier: string): ConferenceStatus {
+  switch (tier) {
+    case 'ELITE':
+      return 'OPEN';
+    case 'PREMIUM':
+      return 'CLOSE';
+    case 'STANDARD':
+      return 'UP COMING';
+    default:
+      return 'ARCHIVE';
+  }
+}
+
 export default function ConferencesPage() {
   const [activeStatus, setActiveStatus] = useState<ConferenceStatus>("OPEN");
+  const { conferences, loading, error } = useConferences();
+
+  // Transform API conferences to display format
+  const displayConferences = useMemo(() => {
+    return conferences.map((conf, index) => ({
+      id: conf.id,
+      title: conf.name,
+      acronym: conf.acronym,
+      status: getConferenceStatus(conf.tier),
+      date: "TBD 2024",
+      location: conf.publisher || "International",
+      description: `${conf.name}. Leading conference in ${conf.requiredSkills?.slice(0, 3).join(', ') || 'research'}.`,
+      website: conf.website,
+      tier: conf.tier,
+      featured: index === 0,
+      timeLeft: conf.tier === 'ENTRY' ? 'Applications Open' : undefined,
+    }));
+  }, [conferences]);
 
   const statusOrder: Record<string, number> = {
     OPEN: 0,
     CLOSE: 1,
     "UP COMING": 2,
-    ARCHIEVE: 3,
+    ARCHIVE: 3,
   };
 
-  const sortedConferences = [...conferences].sort(
+  const sortedConferences = [...displayConferences].sort(
     (a, b) => statusOrder[a.status] - statusOrder[b.status]
   );
 
   const filteredConferences = sortedConferences.filter((conf) => conf.status === activeStatus);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-32 pb-24 px-6 max-w-7xl mx-auto flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-on-surface-variant">Loading conferences...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen pt-32 pb-24 px-6 max-w-7xl mx-auto flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Error: {error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-on-primary rounded-full text-sm font-medium"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div 
@@ -162,141 +155,124 @@ export default function ConferencesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredConferences.map((conf, index) => (
-          <motion.div
-            key={conf.id}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 * index }}
-            className={`group relative p-8 rounded-xl transition-all duration-300 ${
-              conf.status === 'ARCHIEVE'
-                ? 'bg-surface-container-low/50 opacity-80 grayscale-[0.2]' 
-                : 'bg-surface-container-lowest shadow-sm hover:shadow-md'
-            } ${conf.status === 'CLOSE' ? 'border-l-4 border-amber-400/20' : ''}`}
-          >
-            <div className="flex justify-between items-start mb-6">
-              <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-label font-bold ${
-                conf.status === 'OPEN' ? 'bg-emerald-50 text-emerald-700' : 
-                conf.status === 'CLOSE' ? 'bg-amber-50 text-amber-700' :
-                conf.status === 'UP COMING' ? 'bg-blue-50 text-blue-700' :
-                'bg-surface-container-high text-on-surface-variant'
-              }`}>
-                {conf.status === 'OPEN' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />}
-                {conf.status}
-              </span>
-              <div className="text-on-surface-variant opacity-40 group-hover:opacity-100 transition-opacity">
-                {conf.status === 'OPEN' ? (
-                  conf.featured ? <Star className="w-5 h-5 fill-primary text-primary" /> : <Share2 className="w-5 h-5" />
-                ) : conf.status === 'CLOSE' ? (
-                  <Lock className="w-5 h-5" />
-                ) : conf.status === 'UP COMING' ? (
-                  <Calendar className="w-5 h-5" />
-                ) : (
-                  <Archive className="w-5 h-5" />
-                )}
+        {filteredConferences.length === 0 ? (
+          <div className="col-span-3 text-center py-12 text-on-surface-variant">
+            <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>No conferences found with status &quot;{activeStatus}&quot;</p>
+          </div>
+        ) : (
+          filteredConferences.map((conf, index) => (
+            <motion.div
+              key={conf.id}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 * index }}
+              className={`group relative p-8 rounded-xl transition-all duration-300 ${
+                conf.status === 'ARCHIVE'
+                  ? 'bg-surface-container-low/50 opacity-80 grayscale-[0.2]' 
+                  : 'bg-surface-container-lowest shadow-sm hover:shadow-md'
+              } ${conf.status === 'CLOSE' ? 'border-l-4 border-amber-400/20' : ''}`}
+            >
+              <div className="flex justify-between items-start mb-6">
+                <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-label font-bold ${
+                  conf.status === 'OPEN' ? 'bg-emerald-50 text-emerald-700' : 
+                  conf.status === 'CLOSE' ? 'bg-amber-50 text-amber-700' :
+                  conf.status === 'UP COMING' ? 'bg-blue-50 text-blue-700' :
+                  'bg-surface-container-high text-on-surface-variant'
+                }`}>
+                  {conf.status === 'OPEN' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />}
+                  {conf.status}
+                </span>
+                <div className="text-on-surface-variant opacity-40 group-hover:opacity-100 transition-opacity">
+                  {conf.status === 'OPEN' ? (
+                    conf.featured ? <Star className="w-5 h-5 fill-primary text-primary" /> : <Share2 className="w-5 h-5" />
+                  ) : conf.status === 'CLOSE' ? (
+                    <Lock className="w-5 h-5" />
+                  ) : conf.status === 'UP COMING' ? (
+                    <Calendar className="w-5 h-5" />
+                  ) : (
+                    <Archive className="w-5 h-5" />
+                  )}
+                </div>
               </div>
-            </div>
 
-            <Link to={`/conferences/${conf.id}`}>
-              <h3 className="text-2xl font-headline font-bold text-on-surface mb-2 group-hover:text-primary transition-colors">
-                {conf.title}
-              </h3>
-            </Link>
+              <Link to={`/conferences/${conf.id}`}>
+                <h3 className="text-2xl font-headline font-bold text-on-surface mb-2 group-hover:text-primary transition-colors">
+                  {conf.acronym || conf.title}
+                </h3>
+              </Link>
 
-            <div className="flex flex-col gap-2 mb-6">
-              <div className="flex items-center gap-2 text-on-surface-variant opacity-70">
-                <Calendar className="w-4 h-4" />
-                <span className="text-sm font-label">{conf.date}</span>
+              <div className="flex flex-col gap-2 mb-6">
+                <div className="flex items-center gap-2 text-on-surface-variant opacity-70">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm font-label">{conf.date}</span>
+                </div>
+                <div className="flex items-center gap-2 text-on-surface-variant opacity-70">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm font-label">{conf.location}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-on-surface-variant opacity-70">
-                <MapPin className="w-4 h-4" />
-                <span className="text-sm font-label">{conf.location}</span>
-              </div>
-            </div>
 
-            <p className="text-sm text-on-surface-variant leading-relaxed mb-8">
-              {conf.description}
-            </p>
-
-            <div className="pt-6 border-t border-outline-variant/10">
-              <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-widest font-bold mb-4">
-                Status: {conf.status}
+              <p className="text-sm text-on-surface-variant leading-relaxed mb-8">
+                {conf.description}
               </p>
 
-              {conf.status === 'OPEN' && (
-                <div className="flex items-center justify-between">
-                  {conf.avatars ? (
-                    <div className="flex -space-x-2">
-                      {conf.avatars.map((url, i) => (
-                        <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-surface-container-high overflow-hidden">
-                          <img src={url} alt="Attendee" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                        </div>
-                      ))}
-                      <div className="w-8 h-8 rounded-full border-2 border-white bg-primary text-white text-[10px] font-bold flex items-center justify-center">
-                        {conf.attendees}
-                      </div>
-                    </div>
-                  ) : (
+              <div className="pt-6 border-t border-outline-variant/10">
+                <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-widest font-bold mb-4">
+                  Tier: {conf.tier}
+                </p>
+
+                {conf.status === 'OPEN' && (
+                  <div className="flex items-center justify-between">
                     <span className="text-xs font-label text-on-surface-variant uppercase tracking-widest font-bold">
-                      {conf.featured ? 'Featured Event' : conf.earlyBird ? 'Early Bird Open' : ''}
+                      {conf.featured ? 'Featured Event' : 'Accepting Submissions'}
                     </span>
-                  )}
-                  
-                  {conf.earlyBird ? (
-                    <button className="bg-on-surface text-surface px-4 py-1.5 rounded-full text-xs font-label font-semibold">
-                      REGISTER
-                    </button>
-                  ) : (
-                    <button className="bg-primary/5 text-primary p-2 rounded-full hover:bg-primary hover:text-white transition-colors">
+                    <Link 
+                      to={`/upload?conference=${conf.id}`}
+                      className="bg-primary/5 text-primary p-2 rounded-full hover:bg-primary hover:text-white transition-colors"
+                    >
                       <ArrowUpRight className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              )}
+                    </Link>
+                  </div>
+                )}
 
-              {conf.status === 'CLOSE' && (
-                <div className="flex flex-col gap-3">
-                  {conf.progress ? (
-                    <>
-                      <div className="w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
-                        <div className="bg-amber-400 h-full" style={{ width: `${conf.progress}%` }} />
-                      </div>
-                      <span className="text-[10px] font-label text-on-surface-variant uppercase tracking-widest font-bold">
-                        Review Completion: {conf.progress}%
-                      </span>
-                    </>
-                  ) : (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono bg-surface-container px-2 py-1 rounded text-on-surface-variant">
-                        ID: {conf.idCode}
-                      </span>
-                      <button className="text-primary text-xs font-label font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
-                        CHECK STATUS <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                {conf.status === 'CLOSE' && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono bg-surface-container px-2 py-1 rounded text-on-surface-variant">
+                      Reviews In Progress
+                    </span>
+                    <Link 
+                      to={`/conferences/${conf.id}`}
+                      className="text-primary text-xs font-label font-semibold flex items-center gap-1 group-hover:gap-2 transition-all"
+                    >
+                      CHECK STATUS <ChevronRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                )}
 
-              {conf.status === 'UP COMING' && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-label text-on-surface-variant uppercase tracking-widest font-bold">
-                    Opening Soon
-                  </span>
-                  <span className="text-xs font-mono bg-surface-container px-2 py-1 rounded text-on-surface-variant">
-                    {conf.timeLeft ?? "TBA"}
-                  </span>
-                </div>
-              )}
+                {conf.status === 'UP COMING' && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-label text-on-surface-variant uppercase tracking-widest font-bold">
+                      Opening Soon
+                    </span>
+                    <span className="text-xs font-mono bg-surface-container px-2 py-1 rounded text-on-surface-variant">
+                      {conf.timeLeft ?? "TBA"}
+                    </span>
+                  </div>
+                )}
 
-              {conf.status === 'ARCHIEVE' && (
-                <button className="w-full border border-outline-variant text-on-surface font-label text-xs py-2 rounded hover:bg-surface-container-high transition-colors">
-                  Access Library
-                </button>
-              )}
-            </div>
-          </motion.div>
-        ))}
+                {conf.status === 'ARCHIVE' && (
+                  <Link 
+                    to={`/conferences/${conf.id}`}
+                    className="w-full block text-center border border-outline-variant text-on-surface font-label text-xs py-2 rounded hover:bg-surface-container-high transition-colors"
+                  >
+                    Access Library
+                  </Link>
+                )}
+              </div>
+            </motion.div>
+          ))
+        )}
       </div>
 
       <div className="mt-20 flex justify-center">

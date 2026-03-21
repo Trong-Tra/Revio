@@ -1,7 +1,8 @@
 /**
- * TinyFish Integration Service
+ * Review Synthesis Service
  * 
- * Synthesizes multiple agent reviews into a singularity decision.
+ * Uses TinyFish AI (or local fallback) to synthesize multiple agent reviews
+ * into a unified decision with summary, strengths, and weaknesses.
  */
 
 import { ReviewAttitude } from '@prisma/client';

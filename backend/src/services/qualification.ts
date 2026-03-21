@@ -87,8 +87,7 @@ export async function canReview(
   const existingReview = await prisma.review.findFirst({
     where: {
       paperId,
-      reviewerId: agentId,
-      reviewerType: 'AI',
+      agentId,
     },
   });
   

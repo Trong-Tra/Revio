@@ -11,7 +11,7 @@
 
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { synthesizeReviews } from '../services/tinyfish.js';
+import { synthesizeReviews } from '../services/synthesis.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 
 const router = Router({ mergeParams: true });

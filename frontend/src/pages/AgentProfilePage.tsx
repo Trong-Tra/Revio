@@ -1,70 +1,17 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowRight, ChevronDown, Filter, Search, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, Filter, Search, ShieldCheck, Loader2, FileText } from "lucide-react";
 import { animationTiming, premiumEase } from "../lib/animations";
+import { useAgent } from "../hooks/useAgents";
+import { usePapers } from "../hooks/usePapers";
+import { Link } from "react-router-dom";
 
 type ReviewAspect = {
   title: string;
   score: number;
   note: string;
 };
-
-type ReviewedPaper = {
-  id: string;
-  doi: string;
-  date: string;
-  title: string;
-  description: string;
-  score: number;
-  status: "Published" | "Rejected" | "Under Revision";
-  aspects: ReviewAspect[];
-};
-
-const PAPERS: ReviewedPaper[] = [
-  {
-    id: "p1",
-    doi: "10.1038/s41586-024",
-    date: "Aug 14, 2024",
-    title: "Quantum Coherence in Macroscopic Biological Systems",
-    description: "Review focused on decoherence timeframes and reproducibility across avian-navigation protein experiments.",
-    score: 8.4,
-    status: "Published",
-    aspects: [
-      { title: "Novelty", score: 4, note: "Strong experimental framing and clear novelty claim." },
-      { title: "Rigour", score: 5, note: "Excellent controls and statistical confidence intervals." },
-      { title: "Clarity", score: 4, note: "Methods are clear, though one protocol appendix needs tightening." },
-    ],
-  },
-  {
-    id: "p2",
-    doi: "10.1103/PhysRevA.109",
-    date: "Jul 29, 2024",
-    title: "Anomalous Magnetic Moment of the Muon: Re-evaluating Lattice QCD",
-    description: "Found potential systematic error in hadronic vacuum polarization assumptions.",
-    score: 3.2,
-    status: "Rejected",
-    aspects: [
-      { title: "Novelty", score: 2, note: "Insufficient distinction from prior analyses." },
-      { title: "Rigour", score: 2, note: "Error propagation model omitted key uncertainty terms." },
-      { title: "Clarity", score: 3, note: "Readable narrative but weak supporting tables." },
-    ],
-  },
-  {
-    id: "p3",
-    doi: "10.1002/nano.2024103",
-    date: "May 19, 2024",
-    title: "Photovoltaic Efficiency of Perovskite Heterojunctions",
-    description: "Evaluation targeted long-horizon thermal stability and benchmark consistency.",
-    score: 6.7,
-    status: "Under Revision",
-    aspects: [
-      { title: "Novelty", score: 3, note: "Moderate novelty with promising architecture combinations." },
-      { title: "Rigour", score: 4, note: "Well-structured test matrix, but missing one control condition." },
-      { title: "Clarity", score: 4, note: "Good documentation of setup and material prep." },
-    ],
-  },
-];
 
 function DetailedReviewModal({
   aspects,
@@ -117,20 +64,57 @@ function DetailedReviewModal({
 export default function AgentProfilePage() {
   const { id } = useParams();
   const [search, setSearch] = useState("");
+  const { agent, loading: agentLoading, error: agentError } = useAgent(id);
+  const { papers, loading: papersLoading, error: papersError } = usePapers();
+
+  // Filter papers that this agent has reviewed
+  const agentReviews = useMemo(() => {
+    if (!papers || !id) return [];
+    return papers.filter((paper: any) => 
+      paper.reviews?.some((review: any) => review.agentId === id)
+    );
+  }, [papers, id]);
 
   const filtered = useMemo(() => {
     const normalized = search.toLowerCase().trim();
-    return PAPERS.filter((paper) => {
+    return agentReviews.filter((paper: any) => {
       if (!normalized) return true;
       return (
-        paper.title.toLowerCase().includes(normalized) ||
-        paper.doi.toLowerCase().includes(normalized) ||
-        paper.description.toLowerCase().includes(normalized)
+        paper.title?.toLowerCase().includes(normalized) ||
+        paper.doi?.toLowerCase().includes(normalized) ||
+        paper.abstract?.toLowerCase().includes(normalized)
       );
     });
-  }, [search]);
+  }, [search, agentReviews]);
 
-  const agentName = id ? id.replace(/-/g, " ") : "Agent";
+  const loading = agentLoading || papersLoading;
+  const error = agentError || papersError;
+
+  if (loading) {
+    return (
+      <main className="pt-24 pb-12 px-6 md:px-12 max-w-[1440px] mx-auto min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-on-surface-variant">Loading agent profile...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !agent) {
+    return (
+      <main className="pt-24 pb-12 px-6 md:px-12 max-w-[1440px] mx-auto min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error || "Agent not found"}</p>
+          <Link to="/agents" className="text-primary hover:underline">Back to Agent Directory</Link>
+        </div>
+      </main>
+    );
+  }
+
+  const rating = agent.reputation?.overallReputation 
+    ? agent.reputation.overallReputation / 20 
+    : 4.0;
 
   return (
     <main className="pt-24 pb-12 px-6 md:px-12 max-w-[1440px] mx-auto min-h-screen">
@@ -144,21 +128,30 @@ export default function AgentProfilePage() {
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
               <ShieldCheck className="w-4 h-4" />
-              <span className="font-label text-xs font-bold uppercase tracking-widest">Verified</span>
+              <span className="font-label text-xs font-bold uppercase tracking-widest">{agent.isActive ? 'Active' : 'Inactive'}</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tighter capitalize">{agentName}</h1>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tighter">{agent.name}</h1>
             <p className="text-on-surface-variant max-w-3xl">
-              Deep profile of agent review history, specialties, and per-manuscript scoring rationale.
+              {agent.description || `Deep profile of ${agent.name} review history, specialties, and per-manuscript scoring rationale.`}
             </p>
+            {agent.fields && agent.fields.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {agent.fields.map((field: string) => (
+                  <span key={field} className="px-3 py-1 bg-surface-container-low rounded-full text-xs font-medium">
+                    {field}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <div className="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex items-center gap-8">
             <div className="text-center">
-              <p className="text-3xl font-bold text-primary">4.9/5</p>
+              <p className="text-3xl font-bold text-primary">{rating.toFixed(1)}/5</p>
               <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Peer Rating</p>
             </div>
             <div className="w-px h-12 bg-outline-variant/40" />
             <div className="text-center">
-              <p className="text-3xl font-bold">1,248</p>
+              <p className="text-3xl font-bold">{agent.reputation?.reviewCount || 0}</p>
               <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Reviews</p>
             </div>
           </div>
@@ -177,47 +170,69 @@ export default function AgentProfilePage() {
       </section>
 
       <section className="space-y-5">
-        {filtered.map((paper, idx) => (
-          <motion.article
-            key={paper.id}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: animationTiming.duration.base,
-              delay: idx * animationTiming.stagger.tight,
-              ease: premiumEase,
-            }}
-            className="bg-surface-container-lowest p-5 md:p-6 rounded-xl border border-outline-variant/20"
-          >
-            <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6">
-              <div className="flex-1 space-y-2">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="font-mono text-[10px] text-primary bg-primary/5 px-2 py-0.5 rounded">DOI: {paper.doi}</span>
-                  <span className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant">{paper.date}</span>
-                  <span className="font-label text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-surface-container text-on-surface-variant">{paper.status}</span>
+        {filtered.length === 0 ? (
+          <div className="text-center py-12 text-on-surface-variant">
+            <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>No reviewed papers found.</p>
+          </div>
+        ) : (
+          filtered.map((paper: any, idx: number) => {
+            // Find this agent's review for this paper
+            const agentReview = paper.reviews?.find((r: any) => r.agentId === id);
+            const score = agentReview?.overallScore || paper.rating || 7.0;
+            
+            // Create aspects from review content if available
+            const aspects: ReviewAspect[] = agentReview?.aspects || [
+              { title: "Novelty", score: Math.round(score / 2), note: "Based on review analysis" },
+              { title: "Rigour", score: Math.round(score / 2), note: "Based on review analysis" },
+              { title: "Clarity", score: Math.round(score / 2), note: "Based on review analysis" },
+            ];
+
+            return (
+              <motion.article
+                key={paper.id}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: animationTiming.duration.base,
+                  delay: idx * animationTiming.stagger.tight,
+                  ease: premiumEase,
+                }}
+                className="bg-surface-container-lowest p-5 md:p-6 rounded-xl border border-outline-variant/20"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex flex-wrap items-center gap-3">
+                      {paper.doi && (
+                        <span className="font-mono text-[10px] text-primary bg-primary/5 px-2 py-0.5 rounded">DOI: {paper.doi}</span>
+                      )}
+                      <span className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant">{paper.date}</span>
+                      <span className="font-label text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-surface-container text-on-surface-variant">{paper.decision || "Pending"}</span>
+                    </div>
+                    <h2 className="text-2xl font-bold tracking-tight">{paper.title}</h2>
+                    <p className="text-on-surface-variant">{paper.description || paper.abstract?.slice(0, 200)}...</p>
+                  </div>
+
+                  <div className="lg:min-w-[120px] lg:text-right">
+                    <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Agent Score</p>
+                    <p className="text-3xl font-bold text-primary">{score.toFixed(1)}<span className="text-base text-outline/70">/10</span></p>
+                  </div>
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight">{paper.title}</h2>
-                <p className="text-on-surface-variant">{paper.description}</p>
-              </div>
 
-              <div className="lg:min-w-[120px] lg:text-right">
-                <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Agent Score</p>
-                <p className="text-3xl font-bold text-primary">{paper.score.toFixed(1)}<span className="text-base text-outline/70">/10</span></p>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <DetailedReviewModal aspects={paper.aspects} />
-            </div>
-          </motion.article>
-        ))}
+                <div className="mt-4">
+                  <DetailedReviewModal aspects={aspects} />
+                </div>
+              </motion.article>
+            );
+          })
+        )}
       </section>
 
       <div className="pt-10 flex justify-center">
-        <button className="inline-flex items-center gap-2 text-primary font-label font-bold uppercase tracking-widest text-xs hover:gap-3 transition-all">
+        <Link to="/papers" className="inline-flex items-center gap-2 text-primary font-label font-bold uppercase tracking-widest text-xs hover:gap-3 transition-all">
           Explore Full History
           <ArrowRight className="w-4 h-4" />
-        </button>
+        </Link>
       </div>
     </main>
   );

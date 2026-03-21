@@ -1,34 +1,24 @@
-import { useState, useRef, ChangeEvent, DragEvent } from 'react';
-import { UploadCloud, File, CheckCircle2, X } from 'lucide-react';
+import { useState, useRef, ChangeEvent, DragEvent, useEffect } from 'react';
+import { UploadCloud, File, CheckCircle2, X, Loader2, Globe, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
+import { papersApi } from '../api/client';
+import { useConferences } from '../hooks/useConferences';
 
 export function Upload() {
   const location = useLocation();
   const conferenceFromQuery = new URLSearchParams(location.search).get('conference') ?? '';
+  const { conferences, loading: conferencesLoading } = useConferences();
 
-  const conferenceOptions = [
-    'NeurIPS 2024',
-    'ICML 2024',
-    'CVPR 2024',
-    'RSS 2025',
-    'SIGGRAPH 2024',
-    'ICRA 2025',
-    'Neural Architectures 2024',
-  ];
-
-  const authorOptions = [
-    'alice.chen@synthetica.org',
-    'john.doe@university.edu',
-    'sarah.weber@researchlab.ai',
-    'li.zhang@edge-systems.io',
-    'marcus.chen@stanford.edu',
-    'elena.volkov@ethz.ch',
-  ];
+  // Build conference options from API
+  const conferenceOptions = conferences.map(c => ({
+    id: c.id,
+    name: c.acronym || c.name,
+  }));
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -36,6 +26,9 @@ export function Upload() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [conferenceSource, setConferenceSource] = useState<string>('');
 
   const parsingProgress = Math.min(100, uploadProgress * 1.2);
   const metadataProgress = Math.max(0, Math.min(100, (uploadProgress - 30) * 1.43));
@@ -44,21 +37,28 @@ export function Upload() {
   const [title, setTitle] = useState('');
   const [abstract, setAbstract] = useState('');
   const [keywords, setKeywords] = useState('');
-  const [conferenceQuery, setConferenceQuery] = useState(conferenceFromQuery);
-  const [selectedConference, setSelectedConference] = useState(conferenceFromQuery);
+  const [conferenceQuery, setConferenceQuery] = useState('');
+  const [selectedConferenceId, setSelectedConferenceId] = useState(conferenceFromQuery);
   const [showConferenceOptions, setShowConferenceOptions] = useState(false);
+  const [conferenceUrl, setConferenceUrl] = useState('');
+  const [useConferenceUrl, setUseConferenceUrl] = useState(false);
   const [authorQuery, setAuthorQuery] = useState('');
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
   const [showAuthorOptions, setShowAuthorOptions] = useState(false);
 
-  const filteredConferenceOptions = conferenceOptions.filter((conference) =>
-    conference.toLowerCase().includes(conferenceQuery.toLowerCase())
-  );
+  // Set initial conference query when conferences load
+  useEffect(() => {
+    if (conferenceFromQuery && conferences.length > 0) {
+      const conf = conferences.find(c => c.id === conferenceFromQuery);
+      if (conf) {
+        setConferenceQuery(conf.acronym || conf.name);
+        setSelectedConferenceId(conf.id);
+      }
+    }
+  }, [conferenceFromQuery, conferences]);
 
-  const filteredAuthorOptions = authorOptions.filter(
-    (author) =>
-      author.toLowerCase().includes(authorQuery.toLowerCase()) &&
-      !selectedAuthors.includes(author)
+  const filteredConferenceOptions = conferenceOptions.filter((conf) =>
+    conf.name.toLowerCase().includes(conferenceQuery.toLowerCase())
   );
 
   const handleDragOver = (e: DragEvent) => {
@@ -105,25 +105,83 @@ export function Upload() {
     setSelectedAuthors((prev) => prev.filter((author) => author !== authorEmail));
   };
 
-  const handleSubmit = () => {
-    // Mock upload - no backend connection
-    setIsUploading(true);
+  const handleSubmit = async () => {
+    if (!file || !title) return;
+    // Need either selected conference or conference URL
+    if (!selectedConferenceId && !conferenceUrl) return;
 
-    // Simulate progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setUploadProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          alert('Paper uploaded successfully! (Mock - no backend connected)');
-          setIsUploading(false);
-          setUploadProgress(0);
-        }, 500);
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadProgress(0);
+
+    try {
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 300);
+
+      // Upload to API with conference info
+      const formData = new FormData();
+      formData.append('pdf', file);
+      formData.append('title', title);
+      formData.append('authors', JSON.stringify(selectedAuthors.length > 0 ? selectedAuthors : ['Anonymous']));
+      formData.append('abstract', abstract);
+      formData.append('keywords', JSON.stringify(keywords.split(',').map(k => k.trim()).filter(Boolean)));
+      formData.append('field', 'Computer Science');
+      if (selectedConferenceId) {
+        formData.append('conferenceId', selectedConferenceId);
       }
-    }, 200);
+      if (conferenceUrl) {
+        formData.append('conferenceUrl', conferenceUrl);
+      }
+
+      // Use raw fetch for FormData
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('http://localhost:3001/api/v1/upload', {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setUploadSuccess(true);
+      setConferenceSource(data.meta?.conferenceSource || 'existing');
+      
+      // Reset form after success
+      setTimeout(() => {
+        setFile(null);
+        setTitle('');
+        setAbstract('');
+        setKeywords('');
+        setSelectedAuthors([]);
+        setSelectedConferenceId('');
+        setConferenceQuery('');
+        setConferenceUrl('');
+        setUseConferenceUrl(false);
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 2000);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+      setIsUploading(false);
+    }
   };
+
+  const selectedConferenceName = conferences.find(c => c.id === selectedConferenceId)?.name || 
+    conferences.find(c => c.id === selectedConferenceId)?.acronym || '';
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-6 max-w-4xl mx-auto">
@@ -253,6 +311,24 @@ export function Upload() {
                   </div>
                 </div>
               )}
+
+              {uploadSuccess && (
+                <div className="p-4 bg-emerald-50 text-emerald-700 rounded-lg text-center">
+                  <p className="font-medium">Paper uploaded successfully!</p>
+                  {conferenceSource === 'extracted' && (
+                    <p className="text-sm mt-1">Conference details verified via AI.</p>
+                  )}
+                  {conferenceSource === 'independent' && (
+                    <p className="text-sm mt-1">Submitted as Independent Research.</p>
+                  )}
+                </div>
+              )}
+
+              {uploadError && (
+                <div className="p-4 bg-red-50 text-red-700 rounded-lg text-center">
+                  Error: {uploadError}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -264,48 +340,105 @@ export function Upload() {
             <CardDescription>Enter the details for your paper.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-on-surface">Conference</label>
-              <div className="relative">
-                <Input
-                  placeholder="Type conference name to search..."
-                  value={conferenceQuery}
-                  onChange={(e) => {
-                    setConferenceQuery(e.target.value);
-                    setSelectedConference('');
-                    setShowConferenceOptions(true);
-                  }}
-                  onFocus={() => setShowConferenceOptions(true)}
-                  disabled={isUploading}
-                />
+            {/* Conference Selection Toggle */}
+            <div className="flex gap-2 p-1 bg-surface-container-low rounded-lg">
+              <button
+                type="button"
+                onClick={() => setUseConferenceUrl(false)}
+                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  !useConferenceUrl 
+                    ? 'bg-surface text-on-surface shadow-sm' 
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                Select Existing
+              </button>
+              <button
+                type="button"
+                onClick={() => setUseConferenceUrl(true)}
+                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                  useConferenceUrl 
+                    ? 'bg-surface text-on-surface shadow-sm' 
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-primary" />
+                Auto-Detect from URL
+              </button>
+            </div>
 
-                {showConferenceOptions && conferenceQuery.trim().length > 0 && (
-                  <div className="absolute z-20 mt-2 w-full bg-surface border border-outline-variant/30 rounded-xl shadow-lg max-h-56 overflow-y-auto">
-                    {filteredConferenceOptions.length > 0 ? (
-                      filteredConferenceOptions.map((conference) => (
-                        <button
-                          key={conference}
-                          type="button"
-                          onClick={() => {
-                            setConferenceQuery(conference);
-                            setSelectedConference(conference);
-                            setShowConferenceOptions(false);
-                          }}
-                          className="w-full text-left px-4 py-3 text-sm hover:bg-surface-container-low transition-colors"
-                        >
-                          {conference}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-on-surface-variant">No conference found</div>
-                    )}
-                  </div>
+            {/* Conference Selection - Dropdown or URL Input */}
+            {!useConferenceUrl ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-on-surface">Conference</label>
+                <div className="relative">
+                  {conferencesLoading ? (
+                    <div className="flex items-center gap-2 p-3 bg-surface-container-low rounded-lg">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm text-on-surface-variant">Loading conferences...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Input
+                        placeholder="Type conference name to search..."
+                        value={conferenceQuery}
+                        onChange={(e) => {
+                          setConferenceQuery(e.target.value);
+                          setSelectedConferenceId('');
+                          setShowConferenceOptions(true);
+                        }}
+                        onFocus={() => setShowConferenceOptions(true)}
+                        disabled={isUploading}
+                      />
+
+                      {showConferenceOptions && conferenceQuery.trim().length > 0 && (
+                        <div className="absolute z-20 mt-2 w-full bg-surface border border-outline-variant/30 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                          {filteredConferenceOptions.length > 0 ? (
+                            filteredConferenceOptions.map((conf) => (
+                              <button
+                                key={conf.id}
+                                type="button"
+                                onClick={() => {
+                                  setConferenceQuery(conf.name);
+                                  setSelectedConferenceId(conf.id);
+                                  setShowConferenceOptions(false);
+                                }}
+                                className="w-full text-left px-4 py-3 text-sm hover:bg-surface-container-low transition-colors"
+                              >
+                                {conf.name}
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-on-surface-variant">No conference found</div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                {selectedConferenceName && (
+                  <p className="text-xs text-primary">Selected: {selectedConferenceName}</p>
                 )}
               </div>
-              {selectedConference && (
-                <p className="text-xs text-primary">Selected conference: {selectedConference}</p>
-              )}
-            </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-on-surface flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Conference Website
+                </label>
+                <Input
+                  placeholder="https://conference-website.org"
+                  value={conferenceUrl}
+                  onChange={(e) => setConferenceUrl(e.target.value)}
+                  disabled={isUploading}
+                  type="url"
+                />
+                <p className="text-xs text-on-surface-variant">
+                  Our AI will automatically extract conference details from this URL. 
+                  If not found, your paper will be categorized as &quot;Independent Research&quot;.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-on-surface">Title</label>
@@ -321,38 +454,31 @@ export function Upload() {
               <label className="text-sm font-medium text-on-surface">Authors</label>
               <div className="relative">
                 <Input
-                  placeholder="Type author email to search..."
+                  placeholder="Type author email and press Enter..."
                   value={authorQuery}
                   onChange={(e) => {
                     setAuthorQuery(e.target.value);
                     setShowAuthorOptions(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addAuthor(authorQuery.trim());
+                    }
                   }}
                   onFocus={() => setShowAuthorOptions(true)}
                   disabled={isUploading}
                 />
 
                 {showAuthorOptions && authorQuery.trim().length > 0 && (
-                  <div className="absolute z-20 mt-2 w-full bg-surface border border-outline-variant/30 rounded-xl shadow-lg max-h-56 overflow-y-auto">
-                    {filteredAuthorOptions.length > 0 ? (
-                      filteredAuthorOptions.map((author) => (
-                        <button
-                          key={author}
-                          type="button"
-                          onClick={() => addAuthor(author)}
-                          className="w-full text-left px-4 py-3 text-sm hover:bg-surface-container-low transition-colors"
-                        >
-                          {author}
-                        </button>
-                      ))
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => addAuthor(authorQuery.trim())}
-                        className="w-full text-left px-4 py-3 text-sm hover:bg-surface-container-low transition-colors"
-                      >
-                        Add "{authorQuery.trim()}"
-                      </button>
-                    )}
+                  <div className="absolute z-20 mt-2 w-full bg-surface border border-outline-variant/30 rounded-xl shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => addAuthor(authorQuery.trim())}
+                      className="w-full text-left px-4 py-3 text-sm hover:bg-surface-container-low transition-colors"
+                    >
+                      Add &quot;{authorQuery.trim()}&quot;
+                    </button>
                   </div>
                 )}
               </div>
@@ -407,7 +533,7 @@ export function Upload() {
               <Button variant="ghost" disabled={isUploading}>Save Draft</Button>
               <Button 
                 onClick={handleSubmit}
-                disabled={!file || !selectedConference || isUploading}
+                disabled={!file || (!selectedConferenceId && !conferenceUrl) || !title || isUploading}
               >
                 {isUploading ? 'Processing...' : 'Submit for Review'}
               </Button>

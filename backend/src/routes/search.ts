@@ -62,12 +62,12 @@ router.get('/', asyncHandler(async (req, res) => {
           select: { reviews: true }
         },
         reviews: {
-          where: { reviewerType: 'AI' },
           orderBy: { createdAt: 'desc' },
           take: 1,
           select: {
-            confidenceScore: true,
-            content: true,
+            id: true,
+            text: true,
+            attitude: true,
           }
         }
       }
@@ -75,9 +75,9 @@ router.get('/', asyncHandler(async (req, res) => {
     prisma.paper.count({ where })
   ]);
 
-  // Transform results to include AI confidence score
+  // Transform results
   const results = papers.map(p => {
-    const aiReview = p.reviews[0];
+    const latestReview = p.reviews[0];
     return {
       id: p.id,
       title: p.title,
@@ -87,12 +87,11 @@ router.get('/', asyncHandler(async (req, res) => {
       field: p.field,
       createdAt: p.createdAt,
       reviewCount: p._count.reviews,
-      confidence: aiReview?.confidenceScore 
-        ? Math.round(aiReview.confidenceScore * 100) + '%'
+      confidence: p.skillConfidence 
+        ? Math.round(p.skillConfidence * 100) + '%'
         : null,
-      aiScore: aiReview?.content && typeof aiReview.content === 'object'
-        ? (aiReview.content as any).overallScore
-        : null,
+      latestReview: latestReview?.text?.slice(0, 200) || null,
+      rating: p.rating,
     };
   });
 

@@ -1,82 +1,64 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { BrainCircuit, Terminal, FileText, Network, Globe, Star, ShieldCheck, Search, Filter, X } from "lucide-react";
+import { BrainCircuit, Terminal, FileText, Network, Globe, Star, ShieldCheck, Search, Filter, X, Loader2 } from "lucide-react";
 import { animationTiming, premiumEase } from "../lib/animations";
+import { useAgents } from "../hooks/useAgents";
 
-type Agent = {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  rating: number;
-  icon: typeof BrainCircuit;
-  verified?: boolean;
+// Map agent types to icons
+const iconMap: Record<string, typeof BrainCircuit> = {
+  REVIEWER: FileText,
+  ANALYST: BrainCircuit,
+  CURATOR: Network,
+  DEFAULT: BrainCircuit,
 };
-
-const AGENTS: Agent[] = [
-  {
-    id: "synthesis-alpha",
-    name: "Synthesis-Alpha",
-    category: "ML Research & Synthesis",
-    description: "Optimized for large-scale systematic reviews and meta-analysis of peer-reviewed journals.",
-    rating: 4.9,
-    icon: BrainCircuit,
-    verified: true,
-  },
-  {
-    id: "systemic-o1",
-    name: "Systemic-O1",
-    category: "Systems Engineering",
-    description: "Deep architectural verification and edge-case modeling for decentralized neural networks.",
-    rating: 4.8,
-    icon: Terminal,
-    verified: true,
-  },
-  {
-    id: "clinical-mind",
-    name: "Clinical-Mind",
-    category: "Biomedical Analysis",
-    description: "Expert agent trained on clinical trial data, protein folding models, and pharmacological mapping for drug discovery.",
-    rating: 5,
-    icon: FileText,
-    verified: true,
-  },
-  {
-    id: "logic-flow",
-    name: "Logic-Flow",
-    category: "Predicate Logic",
-    description: "Formal verification agent for auditing smart contracts and mathematical proofs.",
-    rating: 4.7,
-    icon: Network,
-  },
-  {
-    id: "global-semantics",
-    name: "Global-Semantics",
-    category: "NLP & Translation",
-    description: "Cross-lingual concept mapping and semantic translation for international research archives.",
-    rating: 4.6,
-    icon: Globe,
-  },
-];
 
 export default function AgentDirectory() {
   const [query, setQuery] = useState("");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const { agents, loading, error } = useAgents();
 
   const filteredAgents = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return AGENTS.filter((agent) => {
+    return agents.filter((agent) => {
       if (!normalized) return true;
       return (
         agent.name.toLowerCase().includes(normalized) ||
-        agent.category.toLowerCase().includes(normalized) ||
-        agent.description.toLowerCase().includes(normalized)
+        agent.agentType.toLowerCase().includes(normalized) ||
+        agent.description?.toLowerCase().includes(normalized) ||
+        agent.fields?.some((f: string) => f.toLowerCase().includes(normalized))
       );
     });
-  }, [query]);
+  }, [query, agents]);
 
-  const selectedAgent = AGENTS.find((agent) => agent.id === selectedAgentId) ?? null;
+  const selectedAgent = agents.find((agent) => agent.id === selectedAgentId) ?? null;
+
+  if (loading) {
+    return (
+      <main className="pt-24 pb-12 px-6 md:px-12 max-w-[1440px] mx-auto min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-on-surface-variant">Loading agents...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="pt-24 pb-12 px-6 md:px-12 max-w-[1440px] mx-auto min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Error: {error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-on-primary rounded-full text-sm font-medium"
+          >
+            Retry
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pt-24 pb-12 px-6 md:px-12 max-w-[1440px] mx-auto min-h-screen">
@@ -116,7 +98,10 @@ export default function AgentDirectory() {
 
       <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredAgents.map((agent, index) => {
-          const Icon = agent.icon;
+          const Icon = iconMap[agent.agentType] || iconMap.DEFAULT;
+          const rating = agent.reputation?.overallReputation 
+            ? agent.reputation.overallReputation / 20 // Convert 0-100 to 0-5
+            : 4.0;
           return (
             <motion.article
               key={agent.id}
@@ -135,17 +120,22 @@ export default function AgentDirectory() {
                 </div>
                 <div className="inline-flex items-center gap-1 text-sm font-semibold">
                   <Star className="w-4 h-4 text-primary fill-primary" />
-                  {agent.rating.toFixed(1)}
+                  {rating.toFixed(1)}
                 </div>
               </div>
 
               <div className="mb-5">
                 <div className="inline-flex items-center gap-2">
                   <h2 className="text-xl font-bold tracking-tight">{agent.name}</h2>
-                  {agent.verified && <ShieldCheck className="w-4 h-4 text-primary" />}
+                  {agent.isActive && <ShieldCheck className="w-4 h-4 text-primary" />}
                 </div>
-                <p className="font-label text-[10px] uppercase tracking-widest text-primary mt-1">{agent.category}</p>
-                <p className="text-sm text-on-surface-variant mt-3 leading-relaxed">{agent.description}</p>
+                <p className="font-label text-[10px] uppercase tracking-widest text-primary mt-1">{agent.agentType}</p>
+                <p className="text-sm text-on-surface-variant mt-3 leading-relaxed">{agent.description || "No description available"}</p>
+                {agent.fields && agent.fields.length > 0 && (
+                  <p className="text-xs text-on-surface-variant/70 mt-2">
+                    Fields: {agent.fields.slice(0, 3).join(', ')}
+                  </p>
+                )}
               </div>
 
               <div className="pt-4 border-t border-outline-variant/20 flex items-center justify-end gap-2">
@@ -198,13 +188,27 @@ export default function AgentDirectory() {
               <div className="space-y-4">
                 <p className="font-label text-[10px] uppercase tracking-widest text-primary">Benchmarking</p>
                 <h4 className="text-2xl font-bold">{selectedAgent.name}</h4>
-                <p className="text-on-surface-variant">{selectedAgent.description}</p>
+                <p className="text-on-surface-variant">{selectedAgent.description || "No description available"}</p>
                 <div className="grid grid-cols-2 gap-3 pt-3">
                   <div className="bg-surface-container-low rounded-lg p-3">
                     <p className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant">Peer Rating</p>
-                    <p className="text-2xl font-bold">{selectedAgent.rating.toFixed(1)}/5</p>
+                    <p className="text-2xl font-bold">{(selectedAgent.reputation?.overallReputation ? selectedAgent.reputation.overallReputation / 20 : 4.0).toFixed(1)}/5</p>
+                  </div>
+                  <div className="bg-surface-container-low rounded-lg p-3">
+                    <p className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant">Reviews</p>
+                    <p className="text-2xl font-bold">{selectedAgent.reputation?.reviewCount || 0}</p>
                   </div>
                 </div>
+                {selectedAgent.fields && selectedAgent.fields.length > 0 && (
+                  <div className="pt-2">
+                    <p className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant mb-2">Fields</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedAgent.fields.map((field: string) => (
+                        <span key={field} className="px-2 py-1 bg-surface-container-low rounded text-xs">{field}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="absolute bottom-6 left-6 right-6">
                 <Link

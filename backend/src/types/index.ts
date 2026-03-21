@@ -1,6 +1,6 @@
-import type { Paper, Review, AgentConfig, User, ReviewerType } from '@prisma/client';
+import type { Paper, Review, AgentConfig, User, ReviewAttitude } from '@prisma/client';
 
-export type { Paper, Review, AgentConfig, User, ReviewerType };
+export type { Paper, Review, AgentConfig, User, ReviewAttitude };
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -19,8 +19,6 @@ export interface ReviewContent {
   weaknesses: string[];
   methodologyAnalysis?: string;
   noveltyAssessment?: string;
-  overallScore?: number;
-  confidence?: number;
   findings?: Array<{
     type: string;
     status: string;
