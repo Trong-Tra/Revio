@@ -54,12 +54,14 @@ router.post('/signup', asyncHandler(async (req, res) => {
   }
   
   // Create user with empty defaults
+  const user = await prisma.user.create({
     data: {
       name,
       email,
       passwordHash: hashPassword(password),
-      affiliation,
-      orcidId,
+      affiliation: affiliation || '',
+      bio: '',
+      location: '',
     }
   });
   
