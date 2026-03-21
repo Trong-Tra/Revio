@@ -9,21 +9,21 @@ datasource db {
 
 // ==================== ENUMS ====================
 
-enum PaperTier {
+enum ConferenceTier {
   ENTRY
   STANDARD
   PREMIUM
   ELITE
 
-  @@map("paper_tier")
+  @@map("conference_tier")
 }
 
-enum PaperStatus {
-  PENDING
-  UNDER_REVIEW
-  COMPLETED
+enum ConferenceStatus {
+  UPCOMING
+  ACTIVE
+  ARCHIVED
 
-  @@map("paper_status")
+  @@map("conference_status")
 }
 
 enum ReviewAttitude {
@@ -79,22 +79,18 @@ model Paper {
   pdfKey      String   @map("pdf_key")
   doi         String?  @unique
   
-  // UI-facing fields
-  rating      Float?   @default(0) // Average review score (0-10)
-  decision    String?  // Final decision: Accepted/Rejected/etc
+  // Owner
+  userId      String   @map("user_id")
   
-  // Qualification Engine: Skills
-  extractedSkills String[] @default([]) @map("extracted_skills")
-  requiredSkills  String[] @default([]) @map("required_skills")
+  // Final result from synthesis
+  finalResult String?  @map("final_result") // ACCEPT, REJECT, MAJOR_REVISION
+  
+  // Skills required to review this paper
+  requiredSkills String[] @default([]) @map("required_skills")
   skillConfidence Float?   @map("skill_confidence")
   
-  // Qualification Engine: Conference & Tier
+  // Conference link
   conferenceId    String?  @map("conference_id")
-  tier            PaperTier @default(STANDARD)
-  status          PaperStatus @default(PENDING)
-  
-  // Metadata
-  metadata    Json     @default("{}")
   
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -102,14 +98,15 @@ model Paper {
   // Relations
   reviews     Review[]
   synthesis   ReviewSynthesis?
-  assignedAgents String[] @default([]) @map("assigned_agents")
+  reviewers   String[] @default([]) // Array of agent IDs assigned to review
+  conference  Conference? @relation(fields: [conferenceId], references: [id])
+  user        User @relation(fields: [userId], references: [id])
 
   @@index([field])
   @@index([keywords])
   @@index([createdAt])
   @@index([title])
-  @@index([tier])
-  @@index([status])
+  @@index([userId])
   @@map("papers")
 }
 
@@ -168,6 +165,9 @@ model AgentSkill {
   
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  agent       AgentConfig @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@unique([agentId, name])
   @@index([agentId])
@@ -196,6 +196,9 @@ model AgentReputation {
   lastReviewAt      DateTime? @map("last_review_at")
   
   updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  agent             AgentConfig @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@index([tier])
   @@index([overallReputation])
@@ -229,6 +232,10 @@ model AgentConfig {
   
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  skills         AgentSkill[]
+  reputation     AgentReputation?
 
   @@index([isActive])
   @@index([agentType])
@@ -250,6 +257,9 @@ model User {
   
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  papers      Paper[]
 
   @@map("users")
 }
@@ -258,7 +268,8 @@ model Conference {
   id          String    @id @default(uuid())
   name        String
   acronym     String?
-  tier        PaperTier @default(STANDARD)
+  tier        ConferenceTier @default(STANDARD)
+  status      ConferenceStatus @default(UPCOMING)
   
   // Skill requirements
   requiredSkills String[] @default([]) @map("required_skills")
@@ -266,10 +277,15 @@ model Conference {
   // Metadata
   publisher   String?
   website     String?
+  description String?
   
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  papers      Paper[]
 
   @@index([tier])
+  @@index([status])
   @@map("conferences")
 }
