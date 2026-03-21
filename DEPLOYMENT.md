@@ -62,9 +62,17 @@ R2 offers 10GB storage + 1M operations/month completely free.
 4. Settings:
    - **Public Access**: Off (use signed URLs)
    - **CORS**: Add your frontend domain
-5. Go to **Manage R2 API Tokens**:
-   - Create token with `Object Read & Write`
-   - Copy Access Key ID and Secret Access Key
+5. Get your **S3 API endpoint**:
+   - Go to R2 dashboard → Click any bucket
+   - Look for **"S3 API"** section on the right side
+   - Copy the endpoint URL (looks like: `https://<account-id>.r2.cloudflarestorage.com`)
+6. Get your API credentials:
+   - Click **Manage R2 API Tokens** (left sidebar)
+   - Click **Create API Token**
+   - Name: `revio-api-token`
+   - Permissions: **Object Read & Write**
+   - Click **Create API Token**
+   - **⚠️ IMPORTANT**: Copy the **Access Key ID** and **Secret Access Key** immediately (they won't be shown again!)
 
 ### Environment Variables:
 ```env

@@ -32,7 +32,9 @@ cd Revio-BE
 # 4. Deploy storage
 # - Go to https://dash.cloudflare.com/r2
 # - Create bucket "revio-papers"
-# - Create API token
+# - Click "Manage R2 API Tokens" (left sidebar)
+# - Create API Token (Object Read & Write)
+# - ⚠️  SAVE: Access Key ID + Secret Access Key (shown only once!)
 
 # 5. Deploy backend to Render
 # - Connect GitHub repo

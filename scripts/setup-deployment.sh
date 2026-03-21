@@ -54,11 +54,14 @@ echo "📋 Step 2: Storage (Cloudflare R2)"
 echo "----------------------------------"
 echo "1. Go to https://dash.cloudflare.com → R2 Object Storage"
 echo "2. Create bucket 'revio-papers'"
-echo "3. Go to Manage R2 API Tokens → Create API Token"
+echo "3. Click 'Manage R2 API Tokens' (left sidebar)"
+echo "4. Click 'Create API Token' → Name: revio-api-token"
+echo "5. Permissions: Object Read & Write → Create"
+echo "6. ⚠️  COPY THESE IMMEDIATELY - they won't be shown again!"
 echo ""
 read -p "Enter R2_ENDPOINT (e.g., https://xxx.r2.cloudflarestorage.com): " R2_ENDPOINT
-read -p "Enter R2_ACCESS_KEY_ID: " R2_ACCESS_KEY_ID
-read -p "Enter R2_SECRET_ACCESS_KEY: " R2_SECRET_ACCESS_KEY
+read -p "Enter R2_ACCESS_KEY_ID (looks like: xxxxxxxx): " R2_ACCESS_KEY_ID
+read -p "Enter R2_SECRET_ACCESS_KEY (long string, starts with letters): " R2_SECRET_ACCESS_KEY
 
 echo ""
 echo "📋 Step 3: AI Service (OpenRouter)"
