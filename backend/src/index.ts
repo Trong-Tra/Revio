@@ -11,6 +11,7 @@ import { uploadRouter } from './routes/upload.js';
 import { qualificationsRouter } from './routes/qualifications.js';
 import { authRouter } from './routes/auth.js';
 import { conferencesRouter } from './routes/conferences.js';
+import synthesisRouter from './routes/synthesis.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 dotenv.config();
@@ -43,6 +44,9 @@ app.use('/api/v1/upload', uploadRouter);
 app.use('/api/v1/qualifications', qualificationsRouter);
 app.use('/api/v1/conferences', conferencesRouter);
 
+// Synthesis routes - mounted at papers level to handle :paperId param
+app.use('/api/v1/papers/:paperId/synthesis', synthesisRouter);
+
 // 404 handler
 app.use((_req, res) => {
   res.status(404).json({
@@ -59,4 +63,5 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📚 API docs available at http://localhost:${PORT}/health`);
+  console.log(`🤖 TinyFish integration: ${process.env.TINYFISH_API_KEY ? 'enabled' : 'disabled (local fallback)'}`);
 });

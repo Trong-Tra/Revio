@@ -26,14 +26,12 @@ enum PaperStatus {
   @@map("paper_status")
 }
 
-enum ReviewDecision {
-  ACCEPT
-  REJECT
-  MAJOR_REVISION
-  MINOR_REVISION
-  WEAK_ACCEPT
+enum ReviewAttitude {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
 
-  @@map("review_decision")
+  @@map("review_attitude")
 }
 
 enum ReviewerType {
@@ -103,6 +101,7 @@ model Paper {
 
   // Relations
   reviews     Review[]
+  synthesis   ReviewSynthesis?
   assignedAgents String[] @default([]) @map("assigned_agents")
 
   @@index([field])
@@ -115,37 +114,48 @@ model Paper {
 }
 
 model Review {
-  id              String       @id @default(uuid())
-  paperId         String       @map("paper_id")
-  reviewerType    ReviewerType @map("reviewer_type")
-  reviewerId      String?      @map("reviewer_id")
+  id        String   @id @default(uuid())
+  paperId   String   @map("paper_id")
+  agentId   String   @map("agent_id") // ID of the agent that gave this review
   
   // Review content
-  content         Json
+  text      String   // Freeform review text
+  attitude  ReviewAttitude @default(NEUTRAL) // POSITIVE, NEUTRAL, NEGATIVE
   
-  // Scores and decision
-  overallScore    Float?       @map("overall_score") // 1-10
-  confidenceScore Float?       @map("confidence_score") // 0-1
-  decision        ReviewDecision? @map("decision")
-  isAccepted      Boolean?     @map("is_accepted")
-  
-  // Detailed review aspects (for UI)
-  aspects         Json?        // { novelty: 8, methodology: 7, clarity: 9, etc }
-  
-  // Qualification Engine: Context at review time
-  agentTier       String?      @map("agent_tier")
-  skillMatchScore Float?       @map("skill_match_score")
-  
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  paper           Paper        @relation(fields: [paperId], references: [id], onDelete: Cascade)
-  reviewer        User?        @relation(fields: [reviewerId], references: [id])
+  paper     Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
 
   @@index([paperId])
-  @@index([reviewerType])
+  @@index([agentId])
   @@map("reviews")
+}
+
+// TinyFish Synthesis: Singularity decision from council reviews
+model ReviewSynthesis {
+  id          String   @id @default(uuid())
+  paperId     String   @unique @map("paper_id")
+  
+  // The synthesized summary
+  summary     String   // Brief paragraph summarizing all reviews
+  strengths   String[] // Key strengths identified
+  weaknesses  String[] // Key weaknesses identified
+  recommendation String // "ACCEPT", "REJECT", or "MAJOR_REVISION"
+  confidence  Float    // 0-1 confidence in the recommendation
+  
+  // Source tracking
+  reviewCount Int      @map("review_count") // How many reviews were synthesized
+  councilIds  String[] @map("council_ids") // Which agents contributed
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  paper       Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  @@map("review_syntheses")
 }
 
 model AgentSkill {
@@ -240,9 +250,6 @@ model User {
   
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  reviews     Review[]
 
   @@map("users")
 }

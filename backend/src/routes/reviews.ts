@@ -2,44 +2,21 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
-import type { ReviewContent } from '../types/index.js';
+import { ReviewAttitude } from '@prisma/client';
 
 const router = Router();
 
-// Validation schemas
+// Validation schemas for new simplified review
 const createReviewSchema = z.object({
   paperId: z.string().uuid(),
-  content: z.object({
-    summary: z.string(),
-    strengths: z.array(z.string()).default([]),
-    weaknesses: z.array(z.string()).default([]),
-    methodologyAnalysis: z.string().optional(),
-    noveltyAssessment: z.string().optional(),
-    overallScore: z.number().min(1).max(10).optional(),
-    confidence: z.number().min(0).max(1).optional(),
-  }),
-  isAccepted: z.boolean().optional(),
-});
-
-const createAIReviewSchema = z.object({
-  content: z.object({
-    summary: z.string(),
-    strengths: z.array(z.string()).default([]),
-    weaknesses: z.array(z.string()).default([]),
-    findings: z.array(z.object({
-      type: z.string(),
-      status: z.string(),
-      confidence: z.number(),
-    })).optional(),
-    overallScore: z.number().optional(),
-    confidence: z.number().optional(),
-  }),
-  confidenceScore: z.number().optional(),
+  agentId: z.string(), // ID of agent (or human reviewer user ID)
+  text: z.string().min(1, 'Review text is required'),
+  attitude: z.enum(['POSITIVE', 'NEUTRAL', 'NEGATIVE']).default('NEUTRAL'),
 });
 
 // List all reviews (with optional paper filter)
 router.get('/', asyncHandler(async (req, res) => {
-  const { paperId, type, page = '1', perPage = '20' } = req.query;
+  const { paperId, agentId, attitude, page = '1', perPage = '20' } = req.query;
   
   const pageNum = parseInt(page as string, 10);
   const perPageNum = parseInt(perPage as string, 10);
@@ -47,7 +24,8 @@ router.get('/', asyncHandler(async (req, res) => {
 
   const where: any = {};
   if (paperId) where.paperId = paperId;
-  if (type) where.reviewerType = type;
+  if (agentId) where.agentId = agentId;
+  if (attitude) where.attitude = attitude;
 
   const [reviews, total] = await Promise.all([
     prisma.review.findMany({
@@ -59,9 +37,6 @@ router.get('/', asyncHandler(async (req, res) => {
         paper: {
           select: { id: true, title: true, authors: true }
         },
-        reviewer: {
-          select: { id: true, name: true, avatarUrl: true }
-        }
       }
     }),
     prisma.review.count({ where })
@@ -103,7 +78,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   });
 }));
 
-// Submit human review
+// Submit a review (human or AI)
 router.post('/', asyncHandler(async (req, res) => {
   const validated = createReviewSchema.parse(req.body);
   
@@ -121,40 +96,9 @@ router.post('/', asyncHandler(async (req, res) => {
   const review = await prisma.review.create({
     data: {
       paperId: validated.paperId,
-      reviewerType: 'HUMAN',
-      content: validated.content,
-      isAccepted: validated.isAccepted,
-      confidenceScore: validated.content.confidence,
-    }
-  });
-
-  res.status(201).json({
-    success: true,
-    data: review
-  });
-}));
-
-// Submit AI review (triggered by agent-worker)
-router.post('/ai', asyncHandler(async (req, res) => {
-  const { paperId, ...validated } = createAIReviewSchema.parse(req.body);
-  
-  // Verify paper exists
-  const paper = await prisma.paper.findUnique({
-    where: { id: paperId }
-  });
-  
-  if (!paper) {
-    const error = new Error('Paper not found');
-    (error as any).statusCode = 404;
-    throw error;
-  }
-
-  const review = await prisma.review.create({
-    data: {
-      paperId,
-      reviewerType: 'AI',
-      content: validated.content,
-      confidenceScore: validated.confidenceScore || validated.content.confidence,
+      agentId: validated.agentId,
+      text: validated.text,
+      attitude: validated.attitude,
     }
   });
 

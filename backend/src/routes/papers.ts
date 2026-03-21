@@ -19,13 +19,21 @@ const createPaperSchema = z.object({
 // Helper to transform paper for UI
 function transformPaper(paper: any) {
   const reviews = paper.reviews || [];
-  const aiReviews = reviews.filter((r: any) => r.reviewerType === 'AI');
-  const avgScore = aiReviews.length > 0
-    ? aiReviews.reduce((sum: number, r: any) => sum + (r.overallScore || 0), 0) / aiReviews.length
+  const synthesis = paper.synthesis;
+  
+  // Calculate rating based on review attitudes
+  const attitudeScores: Record<string, number> = {
+    'POSITIVE': 8,
+    'NEUTRAL': 6,
+    'NEGATIVE': 4,
+  };
+  
+  const avgScore = reviews.length > 0
+    ? reviews.reduce((sum: number, r: any) => sum + (attitudeScores[r.attitude] || 5), 0) / reviews.length
     : 0;
   
-  const decisions = reviews.map((r: any) => r.decision).filter(Boolean);
-  const decision = decisions.length > 0 ? decisions[0] : 'PENDING';
+  // Get decision from synthesis if available
+  const decision = synthesis?.recommendation || paper.decision || 'PENDING';
   
   return {
     ...paper,
@@ -35,12 +43,13 @@ function transformPaper(paper: any) {
     tag2: paper.keywords?.[1],
     rating: avgScore,
     score: avgScore,
-    decision: decision?.toString().replace(/_/g, ' ') || 'PENDING',
+    decision: decision.toString().replace(/_/g, ' '),
     status: paper.status,
     conferenceName: paper.metadata?.venue || 'Unknown Conference',
     reviewCount: reviews.length,
     confidence: paper.skillConfidence ? `${Math.round(paper.skillConfidence * 100)}%` : null,
     aiScore: avgScore / 10,
+    hasSynthesis: !!synthesis,
   };
 }
 
@@ -83,13 +92,8 @@ router.get('/', asyncHandler(async (req, res) => {
       skip,
       take: perPageNum,
       include: {
-        reviews: {
-          include: {
-            reviewer: {
-              select: { id: true, name: true, avatarUrl: true }
-            }
-          }
-        }
+        reviews: true,
+        synthesis: true,
       }
     }),
     prisma.paper.count({ where })
@@ -116,12 +120,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
     include: {
       reviews: {
         orderBy: { createdAt: 'desc' },
-        include: {
-          reviewer: {
-            select: { id: true, name: true, avatarUrl: true }
-          }
-        }
-      }
+      },
+      synthesis: true,
     }
   });
 
