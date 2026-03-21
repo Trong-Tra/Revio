@@ -92,3 +92,14 @@ yarn.lock
 # Docker volumes (local dev)
 docker-volumes/
 data/
+
+# Backend specific
+backend/dist/
+backend/node_modules/
+backend/.env
+backend/uploads/
+
+# Frontend specific
+frontend/dist/
+frontend/node_modules/
+frontend/.env.local

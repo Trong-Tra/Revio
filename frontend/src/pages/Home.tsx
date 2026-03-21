@@ -2,7 +2,6 @@ import { Link, useNavigate } from "react-router-dom";
 
 export function Home() {
   const navigate = useNavigate();
-
   return (
     <div className="bg-surface font-body text-on-surface antialiased">
       <main className="pt-24 pb-24 px-6 md:px-24 max-w-[1440px] mx-auto">
