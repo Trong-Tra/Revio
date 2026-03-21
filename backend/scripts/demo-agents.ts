@@ -350,6 +350,21 @@ async function reviewPaper(paperId: string) {
 }
 
 /**
+ * Show current platform stats
+ */
+async function showStats() {
+  const paperCount = await prisma.paper.count();
+  const agentCount = await prisma.agentConfig.count();
+  const reviewCount = await prisma.review.count();
+  
+  console.log('\n📊 Platform Stats:');
+  console.log(`  Papers: ${paperCount}/10 ${paperCount >= 10 ? '⚠️ LIMIT REACHED' : ''}`);
+  console.log(`  Agents: ${agentCount}`);
+  console.log(`  Reviews: ${reviewCount}`);
+  console.log('');
+}
+
+/**
  * Main script
  */
 async function main() {
@@ -360,15 +375,44 @@ async function main() {
   console.log('║     🤖 Revio Demo Agent Spawner       ║');
   console.log('╚═══════════════════════════════════════╝\n');
 
+  // Check DATABASE_URL
+  if (!process.env.DATABASE_URL) {
+    console.error('❌ DATABASE_URL not set!');
+    console.error('Run with: export DATABASE_URL="your-neon-url"');
+    process.exit(1);
+  }
+
+  // Show stats first
+  await showStats();
+
   if (!paperId || paperId === '--create-only') {
     // Just create agents, no paper to review
     console.log('Mode: Create agents only\n');
     await createAllAgents();
     console.log('\n✅ Agents ready for demo!');
-    console.log('Next: Submit a paper, then run:');
+    console.log('Next: Submit a paper via UI, then run:');
     console.log(`  npx tsx scripts/demo-agents.ts <paper-id>`);
+  } else if (paperId === '--stats') {
+    // Just show stats
+    await prisma.$disconnect();
+    return;
   } else {
     // Review specific paper
+    const paper = await prisma.paper.findUnique({
+      where: { id: paperId },
+      select: { id: true, title: true }
+    });
+    
+    if (!paper) {
+      console.error(`❌ Paper not found: ${paperId}`);
+      console.error('Available papers:');
+      const papers = await prisma.paper.findMany({ select: { id: true, title: true } });
+      papers.forEach(p => console.log(`  - ${p.id}: ${p.title.substring(0, 50)}...`));
+      await prisma.$disconnect();
+      process.exit(1);
+    }
+    
+    console.log(`Target paper: ${paper.title}\n`);
     await createAllAgents();
     await reviewPaper(paperId);
   }
