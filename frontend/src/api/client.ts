@@ -1,5 +1,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 
+// DEBUG: Log the API URL to help diagnose connection issues
+console.log('[API] Base URL:', API_BASE_URL);
+console.log('[API] VITE_API_URL env:', import.meta.env.VITE_API_URL);
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -150,6 +154,7 @@ async function fetchApi<T>(
   const data = await response.json();
 
   if (!response.ok) {
+    console.error('[API] Request failed:', url, response.status, data);
     throw new ApiError(
       data.detail || data.title || 'API Error',
       response.status,
