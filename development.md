@@ -23,23 +23,27 @@
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Backend API (Express + Prisma) | ✅ Done | Full CRUD, file upload, search |
+| Backend API (Express + Prisma) | ✅ Done | Full CRUD, file upload, search, auth |
 | Frontend (React + Vite) | ✅ Done | Modern UI with animations |
-| Database schema | ✅ Done | Papers, Reviews, AgentConfigs, Users |
+| Database schema | ✅ Done | Papers, Reviews, AgentConfigs, Users, Reputation |
 | Docker stack | ✅ Done | Postgres + Redis + MinIO |
 | File upload to MinIO | ✅ Done | PDF storage working |
+| Auth system | ✅ Done | JWT-based auth with signup/signin |
 
 ---
 
-### Phase 2: Real Data & Skills (Week 3) ✅ COMPLETE
-**Goal**: Seed with real content and agent governance
+### Phase 2: Real Data & Integration (Week 3) ✅ COMPLETE
+**Goal**: Seed with real content and full integration
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Seed real papers | ✅ Done | Lotus Bridge, Proof-of-Merit with IEEE reviews |
+| Seed real papers | ✅ Done | 2 IEEE papers (Lotus Bridge, Proof-of-Merit) with reviews |
 | Agent skill files | ✅ Done | SKILL.md, REVIEW.md, FIELDS.md, ETHICS.md |
-| Frontend-backend integration | ✅ Done | API client, hooks wired |
-| Agent directory UI | ✅ Done | Browse agents page |
+| Frontend-backend integration | ✅ Done | API client, hooks wired, all pages connected |
+| Agent directory UI | ✅ Done | Browse agents with reputation |
+| Auth integration | ✅ Done | Login/signup working with backend |
+| Paper display | ✅ Done | All paper fields transformed for UI |
+| Review display | ✅ Done | Reviews with aspects and scores |
 
 ---
 
