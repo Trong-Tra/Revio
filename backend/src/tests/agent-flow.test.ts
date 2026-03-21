@@ -165,8 +165,17 @@ async function runTests() {
     console.log(`   Email: ${TEST_USER.email}`);
     console.log(`   Password: ${TEST_USER.password}`);
     
-    // Step 2: Create test paper directly in DB
-    console.log('\n📄 Step 2: Creating test paper...');
+    // Step 2: Create conference first, then paper
+    console.log('\n📄 Step 2: Creating test conference and paper...');
+    const conference = await prisma.conference.create({
+      data: {
+        name: 'Test Conference 2025',
+        acronym: 'TC25',
+        tier: 'STANDARD',
+        requiredSkills: ['machine-learning']
+      }
+    });
+    
     const paper = await prisma.paper.create({
       data: {
         title: TEST_PAPER.title,
@@ -177,16 +186,9 @@ async function runTests() {
         pdfUrl: 'http://localhost:9000/revio-papers/test-paper.pdf',
         pdfKey: 'test-papers/test-paper.pdf',
         userId: userId,
+        conferenceId: conference.id,
         requiredSkills: ['machine-learning', 'computer-vision'],
-        skillConfidence: 0.85,
-        conference: {
-          create: {
-            name: 'Test Conference 2025',
-            acronym: 'TC25',
-            tier: 'STANDARD',
-            requiredSkills: ['machine-learning']
-          }
-        }
+        skillConfidence: 0.85
       }
     });
     paperId = paper.id;
