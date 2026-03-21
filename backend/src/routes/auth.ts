@@ -208,7 +208,8 @@ router.patch('/profile', asyncHandler(async (req, res) => {
       name: true,
       email: true,
       affiliation: true,
-      orcidId: true,
+      bio: true,
+      location: true,
       role: true,
       avatarUrl: true,
     }
