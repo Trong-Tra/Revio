@@ -6,7 +6,8 @@ export function TopNav() {
   const location = useLocation();
 
   const navItems = [
-    { name: "Research", path: "/" },
+    { name: "Home", path: "/" },
+    { name: "Conferences", path: "/conferences" },
     { name: "AI Agents", path: "/settings" },
     { name: "Documentation", path: "/docs" },
     { name: "Upload", path: "/upload" },
@@ -17,7 +18,7 @@ export function TopNav() {
       <div className="flex items-center justify-between px-6 py-3 max-w-full mx-auto">
         <div className="flex items-center gap-8">
           <Link to="/" className="text-xl font-bold tracking-tighter text-zinc-900 font-headline">
-            Digital Atelier
+            Revio
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 font-sans text-sm tracking-tight">
@@ -46,15 +47,6 @@ export function TopNav() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center px-3 py-1.5 bg-zinc-100 rounded-lg">
-            <span className="material-symbols-outlined text-zinc-400 text-lg mr-2">search</span>
-            <input
-              type="text"
-              placeholder="Search research..."
-              className="bg-transparent border-none focus:ring-0 text-xs w-48"
-            />
-          </div>
-
           <button className="material-symbols-outlined text-zinc-500 hover:text-emerald-700 transition-colors">notifications</button>
           <button className="material-symbols-outlined text-zinc-500 hover:text-emerald-700 transition-colors">account_circle</button>
           <button className="hidden lg:block px-4 py-2 text-sm font-medium text-emerald-700 border border-emerald-700/20 rounded-full hover:bg-emerald-50 transition-colors">

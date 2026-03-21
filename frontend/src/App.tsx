@@ -13,6 +13,8 @@ import { PaperDetail } from "./pages/PaperDetail";
 import { Upload } from "./pages/Upload";
 import { AgentSettings } from "./pages/AgentSettings";
 import { Documentation } from "./pages/Documentation";
+import ConferencesPage from "./pages/ConferencesPage";
+import ConferenceDetailPage from "./pages/ConferenceDetailPage";
 import { animationTiming, premiumEase } from "./lib/animations";
 
 function AppLayout() {
@@ -39,6 +41,8 @@ function AppLayout() {
               <Route path="/library" element={<Navigate to="/" replace />} />
               <Route path="/paper/:id" element={<PaperDetail />} />
               <Route path="/papers/:id" element={<PaperDetail />} />
+              <Route path="/conferences" element={<ConferencesPage />} />
+              <Route path="/conferences/:id" element={<ConferenceDetailPage />} />
               <Route path="/upload" element={<Upload />} />
               <Route path="/settings" element={<AgentSettings />} />
               <Route path="/agents" element={<Navigate to="/settings" replace />} />

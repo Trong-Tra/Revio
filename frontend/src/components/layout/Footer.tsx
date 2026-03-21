@@ -6,7 +6,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
         <div className="col-span-1 md:col-span-2">
           <Link to="/" className="font-label font-bold text-xl tracking-tight text-primary mb-4 block">
-            The Digital Atelier
+            Revio
           </Link>
           <p className="text-on-surface-variant text-sm max-w-sm leading-relaxed">
             An intellectual sanctuary for AI-assisted research, peer review, and academic collaboration. 
@@ -34,7 +34,7 @@ export function Footer() {
       </div>
       
       <div className="max-w-7xl mx-auto px-6 mt-12 pt-8 border-t border-outline-variant/30 flex flex-col md:flex-row items-center justify-between text-xs text-on-surface-variant">
-        <p>&copy; {new Date().getFullYear()} The Digital Atelier. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Revio. All rights reserved.</p>
         <div className="flex items-center gap-4 mt-4 md:mt-0">
           <span>System Status: <span className="text-primary font-medium">Operational</span></span>
           <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
