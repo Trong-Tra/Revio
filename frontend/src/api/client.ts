@@ -29,33 +29,18 @@ export interface Paper {
   pdfKey: string;
   doi?: string;
   
-  // UI-facing fields
-  rating: number; // Average review score (0-10)
-  decision: string; // "Accepted", "Rejected", "Major Revision", etc.
-  
+  // Final result from synthesis
+  finalResult: string; // "ACCEPT", "REJECT", "MAJOR_REVISION", etc.
+
   // For UI display
   date: string; // createdAt formatted
   description: string; // alias for abstract
   tag1?: string; // first keyword
   tag2?: string; // second keyword
-  status: string; // PaperStatus
-  
+
   // Conference
   conferenceId?: string;
   conferenceName?: string;
-  
-  // Scores from reviews
-  score: number; // Overall score (same as rating)
-  aspects?: ReviewAspect[]; // Detailed aspects
-  
-  metadata?: {
-    venue?: string;
-    year?: number;
-    pages?: string;
-    publisher?: string;
-    citations?: number;
-    github?: string | null;
-  };
   createdAt: string;
   updatedAt: string;
   reviewCount?: number;
@@ -67,36 +52,11 @@ export interface Paper {
 export interface Review {
   id: string;
   paperId: string;
-  reviewerType: 'AI' | 'HUMAN';
-  reviewerId?: string;
-  reviewer?: {
-    id: string;
-    name: string;
-    avatarUrl?: string;
-  };
-  content: {
-    summary: string;
-    strengths: string[];
-    weaknesses: string[];
-    methodologyAnalysis?: string;
-    noveltyAssessment?: string;
-    overallScore?: number;
-    confidence?: number;
-    findings?: Array<{
-      type: string;
-      status: string;
-      confidence: number;
-    }>;
-    recommendation?: string;
-    evaluation?: string;
-  };
-  // Detailed aspects
-  aspects?: ReviewAspect[];
-  overallScore?: number;
-  decision?: string;
-  isAccepted?: boolean | null;
-  confidenceScore?: number;
+  agentId: string;
+  text: string;
+  attitude: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface AgentConfig {
@@ -202,37 +162,18 @@ async function fetchApi<T>(
 
 // Transform paper from API to UI format
 function transformPaper(paper: any): Paper {
-  const reviews = paper.reviews || [];
-  const aiReviews = reviews.filter((r: any) => r.reviewerType === 'AI');
-  const avgScore = aiReviews.length > 0
-    ? aiReviews.reduce((sum: number, r: any) => sum + (r.content?.overallScore || 0), 0) / aiReviews.length
-    : 0;
-  
-  // Get decision from reviews
-  const decisions = reviews.map((r: any) => r.decision || r.content?.recommendation);
-  const decision = decisions.length > 0 ? decisions[0] : 'Pending';
-  
   return {
     ...paper,
-    date: new Date(paper.createdAt).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    date: new Date(paper.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     }),
     description: paper.abstract,
     tag1: paper.keywords?.[0],
     tag2: paper.keywords?.[1],
-    rating: avgScore,
-    score: avgScore,
-    decision: decision?.toString().replace(/_/g, ' ') || 'Pending',
-    status: paper.status,
-    conferenceName: paper.metadata?.venue || 'Unknown Conference',
-    aspects: reviews[0]?.aspects || [
-      { name: 'Novelty', score: avgScore * 0.9 },
-      { name: 'Methodology', score: avgScore * 0.95 },
-      { name: 'Clarity', score: avgScore * 0.85 },
-      { name: 'Impact', score: avgScore * 0.88 },
-    ],
+    finalResult: paper.finalResult?.toString().replace(/_/g, ' ') || 'Pending',
+    conferenceName: 'Unknown Conference',
   };
 }
 
@@ -480,15 +421,15 @@ export const agentConfigsApi = {
 
 // User Papers API (for profile page)
 export const userPapersApi = {
-  getUserPapers: async (userId: string): Promise<Paper[]> => {
-    // For now, return all papers as mock
-    const response = await papersApi.list();
+  getUserPapers: async (_userId: string): Promise<Paper[]> => {
+    // Call the /my-papers endpoint which returns papers for the authenticated user
+    const response = await fetchApi<{ data: Paper[] }>('/papers/my-papers');
     return response.data;
   },
-  
-  getUserReviews: async (userId: string): Promise<Review[]> => {
-    const response = await reviewsApi.list();
-    return response.data.filter(r => r.reviewerId === userId);
+
+  getUserReviews: async (_userId: string): Promise<Review[]> => {
+    // Reviews are now simple - we get them through papers
+    return [];
   },
 };
 
