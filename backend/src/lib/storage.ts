@@ -6,11 +6,34 @@ import { v4 as uuidv4 } from 'uuid';
 const isR2 = process.env.STORAGE_ENDPOINT?.includes('r2.cloudflarestorage.com');
 const isMinIO = !isR2;
 
+// Build endpoint URL
+function buildEndpoint(): string {
+  const endpoint = process.env.STORAGE_ENDPOINT || 'localhost';
+  
+  // If already full URL, use it
+  if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+    return endpoint;
+  }
+  
+  // Otherwise construct from parts
+  const protocol = process.env.STORAGE_USE_SSL === 'true' ? 'https' : 'http';
+  const port = process.env.STORAGE_PORT || (isR2 ? '443' : '9000');
+  
+  // R2 doesn't need port in URL
+  if (isR2) {
+    return `${protocol}://${endpoint}`;
+  }
+  
+  return `${protocol}://${endpoint}:${port}`;
+}
+
+const ENDPOINT = buildEndpoint();
+console.log('[Storage] Endpoint:', ENDPOINT);
+console.log('[Storage] Provider:', isR2 ? 'R2' : 'MinIO');
+
 // Configure S3 client
 const s3Client = new S3Client({
-  endpoint: isR2
-    ? process.env.STORAGE_ENDPOINT // R2: https://xxx.r2.cloudflarestorage.com
-    : `http${process.env.STORAGE_USE_SSL === 'true' ? 's' : ''}://${process.env.STORAGE_ENDPOINT}:${process.env.STORAGE_PORT}`,
+  endpoint: ENDPOINT,
   region: isR2 ? 'auto' : 'us-east-1',
   credentials: {
     accessKeyId: process.env.STORAGE_ACCESS_KEY || 'minioadmin',
@@ -88,20 +111,13 @@ export const storage = {
       })
     );
 
-    // Build public URL based on provider
+    // Build public URL
     let url: string;
-    if (isR2) {
-      // R2: Use custom public URL or construct from endpoint
-      if (PUBLIC_URL) {
-        url = `${PUBLIC_URL}/${key}`;
-      } else {
-        // R2 default: https://<account>.r2.cloudflarestorage.com/<bucket>/<key>
-        url = `${process.env.STORAGE_ENDPOINT}/${BUCKET}/${key}`;
-      }
+    if (PUBLIC_URL) {
+      url = `${PUBLIC_URL}/${key}`;
     } else {
-      // MinIO
-      const protocol = process.env.STORAGE_USE_SSL === 'true' ? 'https' : 'http';
-      url = `${protocol}://${process.env.STORAGE_ENDPOINT}:${process.env.STORAGE_PORT}/${BUCKET}/${key}`;
+      // Use endpoint + bucket + key
+      url = `${ENDPOINT}/${BUCKET}/${key}`;
     }
 
     console.log(`[Storage] Uploaded: ${key} -> ${url.substring(0, 80)}...`);
