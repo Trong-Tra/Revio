@@ -270,9 +270,10 @@ export const papersApi = {
     const formData = new FormData();
     formData.append('pdf', file);
     formData.append('title', metadata.title);
-    formData.append('authors', JSON.stringify(metadata.authors));
+    // Backend expects comma-separated strings, not JSON
+    formData.append('authors', metadata.authors.join(', '));
     formData.append('abstract', metadata.abstract);
-    formData.append('keywords', JSON.stringify(metadata.keywords));
+    formData.append('keywords', metadata.keywords.join(', '));
     formData.append('field', metadata.field);
     if (metadata.doi) formData.append('doi', metadata.doi);
     if (metadata.conferenceId) formData.append('conferenceId', metadata.conferenceId);
