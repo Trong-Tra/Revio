@@ -177,6 +177,7 @@
 | 2026-03-21 | Backend API implemented - Express + Prisma + Docker | System |
 | 2026-03-21 | Frontend-backend integration complete | System |
 | 2026-03-21 | PDF upload with MinIO storage implemented | System |
+| 2026-03-21 | Frontend disconnected from backend for refactor | System |
 
 ---
 
