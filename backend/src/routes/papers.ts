@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
+import { requireAuth, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -21,19 +22,8 @@ function transformPaper(paper: any) {
   const reviews = paper.reviews || [];
   const synthesis = paper.synthesis;
   
-  // Calculate rating based on review attitudes
-  const attitudeScores: Record<string, number> = {
-    'POSITIVE': 8,
-    'NEUTRAL': 6,
-    'NEGATIVE': 4,
-  };
-  
-  const avgScore = reviews.length > 0
-    ? reviews.reduce((sum: number, r: any) => sum + (attitudeScores[r.attitude] || 5), 0) / reviews.length
-    : 0;
-  
-  // Get decision from synthesis if available
-  const decision = synthesis?.recommendation || paper.decision || 'PENDING';
+  // Get final result from synthesis or paper
+  const finalResult = synthesis?.recommendation || paper.finalResult || 'PENDING';
   
   return {
     ...paper,
@@ -41,17 +31,32 @@ function transformPaper(paper: any) {
     description: paper.abstract,
     tag1: paper.keywords?.[0],
     tag2: paper.keywords?.[1],
-    rating: avgScore,
-    score: avgScore,
-    decision: decision.toString().replace(/_/g, ' '),
-    status: paper.status,
-    conferenceName: paper.metadata?.venue || 'Unknown Conference',
+    finalResult: finalResult.toString().replace(/_/g, ' '),
     reviewCount: reviews.length,
     confidence: paper.skillConfidence ? `${Math.round(paper.skillConfidence * 100)}%` : null,
-    aiScore: avgScore / 10,
     hasSynthesis: !!synthesis,
   };
 }
+
+// Get current user's papers (requires authentication) - MUST be before /:id
+router.get('/my-papers', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
+  const userId = req.userId!;
+  
+  const papers = await prisma.paper.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      reviews: true,
+      synthesis: true,
+    }
+  });
+  
+  res.json({
+    success: true,
+    data: papers.map(transformPaper),
+    meta: { count: papers.length }
+  });
+}));
 
 // List papers with filters
 router.get('/', asyncHandler(async (req, res) => {
@@ -137,8 +142,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
   });
 }));
 
-// Create paper
-router.post('/', asyncHandler(async (req, res) => {
+// Create paper (requires authentication)
+router.post('/', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
   const validated = createPaperSchema.parse(req.body);
   
   const paper = await prisma.paper.create({
@@ -146,6 +151,7 @@ router.post('/', asyncHandler(async (req, res) => {
       ...validated,
       pdfUrl: '',
       pdfKey: '',
+      userId: req.userId!,
     }
   });
 
@@ -170,19 +176,50 @@ router.patch('/:id', asyncHandler(async (req, res) => {
   });
 }));
 
-// Delete paper
-router.delete('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+// Delete paper (only own papers)
+router.delete('/:id', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
+  const paperId = req.params.id as string;
+  const userId = req.userId!;
   
-  await prisma.paper.delete({ where: { id } });
+  // Check if paper exists and belongs to user
+  const paper = await prisma.paper.findUnique({
+    where: { id: paperId },
+    select: { userId: true, pdfKey: true }
+  });
+  
+  if (!paper) {
+    const error = new Error('Paper not found');
+    (error as any).statusCode = 404;
+    throw error;
+  }
+  
+  if (paper.userId !== userId) {
+    const error = new Error('You can only delete your own papers');
+    (error as any).statusCode = 403;
+    throw error;
+  }
+  
+  // Delete PDF from storage if exists
+  if (paper.pdfKey) {
+    try {
+      const { storage } = await import('../lib/storage.js');
+      await storage.deleteFile(paper.pdfKey);
+    } catch (storageError) {
+      console.warn(`[Delete Paper] Could not delete PDF file: ${paper.pdfKey}`, storageError);
+    }
+  }
+  
+  // Delete paper from database
+  await prisma.paper.delete({ where: { id: paperId } });
 
   res.json({
     success: true,
-    data: null
+    data: null,
+    message: 'Paper deleted successfully'
   });
 }));
 
-// Download PDF
+// Download PDF - use signed URL for access
 router.get('/:id/pdf', asyncHandler(async (req, res) => {
   const { id } = req.params;
   
@@ -191,13 +228,17 @@ router.get('/:id/pdf', asyncHandler(async (req, res) => {
     select: { pdfUrl: true, pdfKey: true, title: true }
   });
 
-  if (!paper || !paper.pdfUrl) {
+  if (!paper || !paper.pdfKey) {
     const error = new Error('PDF not found');
     (error as any).statusCode = 404;
     throw error;
   }
 
-  res.redirect(paper.pdfUrl);
+  // Generate a signed URL for direct access
+  const { storage } = await import('../lib/storage.js');
+  const signedUrl = await storage.getSignedDownloadUrl(paper.pdfKey, 3600);
+  
+  res.redirect(signedUrl);
 }));
 
 export { router as papersRouter };

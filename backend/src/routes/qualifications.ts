@@ -179,7 +179,7 @@ router.post('/papers/:id/extract-skills', asyncHandler(async (req, res) => {
   const updated = await prisma.paper.update({
     where: { id },
     data: {
-      extractedSkills: extraction.skills,
+      requiredSkills: extraction.skills,
       skillConfidence: extraction.confidence,
     },
   });

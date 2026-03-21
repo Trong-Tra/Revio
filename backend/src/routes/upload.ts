@@ -3,6 +3,7 @@ import { uploadSingle } from '../middleware/upload.js';
 import { storage } from '../lib/storage.js';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../middleware/error-handler.js';
+import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { z } from 'zod';
 import { extractConferenceInfo, upsertConferenceFromExtraction } from '../services/conferenceDiscovery.js';
 
@@ -20,15 +21,18 @@ const uploadSchema = z.object({
   conferenceUrl: z.string().optional(), // New: URL for TinyFish to scrape
 });
 
-// Upload paper with PDF
+// Upload paper with PDF (requires authentication)
 router.post('/',
+  requireAuth,
   uploadSingle,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     if (!req.file) {
       const error = new Error('PDF file is required');
       (error as any).statusCode = 400;
       throw error;
     }
+    
+    const userId = req.userId;
 
     // Parse and validate metadata
     const validated = uploadSchema.parse(req.body);
@@ -64,7 +68,6 @@ router.post('/',
           acronym: 'IND',
           tier: 'ENTRY',
           requiredSkills: [],
-          description: 'Papers submitted without affiliation to a specific conference.',
         },
         update: {},
       });
@@ -91,19 +94,21 @@ router.post('/',
         conferenceId: conferenceId,
         pdfUrl: uploadResult.url,
         pdfKey: uploadResult.key,
-        status: 'PENDING',
+        userId: userId!,
       },
-      include: {
-        conference: true,
-      }
     });
+    
+    // Get conference name separately
+    const conference = conferenceId 
+      ? await prisma.conference.findUnique({ where: { id: conferenceId } })
+      : null;
 
     res.status(201).json({
       success: true,
       data: paper,
       meta: {
         conferenceSource,
-        conferenceName: paper.conference?.name,
+        conferenceName: conference?.name || 'Independent Submission',
       },
       message: conferenceSource === 'extracted' 
         ? 'Paper uploaded successfully. Conference details extracted and verified.'

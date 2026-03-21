@@ -91,7 +91,6 @@ router.get('/', asyncHandler(async (req, res) => {
         ? Math.round(p.skillConfidence * 100) + '%'
         : null,
       latestReview: latestReview?.text?.slice(0, 200) || null,
-      rating: p.rating,
     };
   });
 
