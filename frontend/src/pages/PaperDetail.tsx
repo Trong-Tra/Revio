@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { animationTiming, premiumEase } from "../lib/animations";
 import { usePaper } from "../hooks/usePapers";
 import { useAuth } from "../hooks/useAuth";
+import { papersApi } from "../api/client";
 
 export function PaperDetail() {
   const { id } = useParams();
@@ -81,7 +82,7 @@ export function PaperDetail() {
             <p className="text-on-surface-variant font-medium mb-6">PDF Viewer</p>
             <div className="flex gap-4 relative z-10">
               {paper.pdfUrl ? (
-                <a href={paper.pdfUrl} target="_blank" rel="noopener noreferrer">
+                <a href={papersApi.getPdf(paper.id)} target="_blank" rel="noopener noreferrer">
                   <Button variant="secondary">
                     <Download className="w-4 h-4 mr-2" />
                     View PDF
