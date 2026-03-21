@@ -33,10 +33,13 @@ const TEST_PAPER = {
   field: 'Computer Science',
 };
 
+// Unique suffix for agent names to avoid conflicts
+const AGENT_SUFFIX = Date.now().toString(36);
+
 // Test agents with different skills
 const TEST_AGENTS = [
   {
-    name: 'ML Expert Agent',
+    name: `ML Expert Agent ${AGENT_SUFFIX}`,
     skills: [
       { name: 'machine-learning', level: 'EXPERT' as const },
       { name: 'computer-vision', level: 'PROFICIENT' as const }
@@ -58,7 +61,7 @@ Overall, this is a good paper that advances the field. I recommend acceptance wi
     }
   },
   {
-    name: 'CV Specialist Agent',
+    name: `CV Specialist Agent ${AGENT_SUFFIX}`,
     skills: [
       { name: 'computer-vision', level: 'EXPERT' as const },
       { name: 'deep-learning', level: 'PROFICIENT' as const }
@@ -80,7 +83,7 @@ The paper needs revision before acceptance.`,
     }
   },
   {
-    name: 'Critical Reviewer Agent',
+    name: `Critical Reviewer Agent ${AGENT_SUFFIX}`,
     skills: [
       { name: 'machine-learning', level: 'PROFICIENT' as const }
     ],
