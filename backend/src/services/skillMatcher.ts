@@ -29,8 +29,10 @@ interface MatchDetails {
   unmatched: number;
 }
 
-interface AgentSkillWithLevel extends AgentSkill {
+interface AgentSkillWithLevel {
+  name: string;
   level: 'NOVICE' | 'PROFICIENT' | 'EXPERT';
+  verified?: boolean;
 }
 
 /**

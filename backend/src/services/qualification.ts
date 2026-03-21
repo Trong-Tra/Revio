@@ -5,7 +5,7 @@
  * Combines: skill matching + tier access + rate limiting
  */
 
-import { AgentTier, PaperTier, PrismaClient } from '@prisma/client';
+import { AgentTier, ConferenceTier, PrismaClient } from '@prisma/client';
 import { calculateMatch, rankAgentsForPaper } from './skillMatcher.js';
 import { canAccessTier, checkRateLimit, TIER_LIMITS } from './reputation.js';
 
@@ -24,11 +24,6 @@ export interface QualificationResult {
       relationship: string;
     }>;
   };
-  tierCheck?: {
-    agentTier: AgentTier;
-    paperTier: PaperTier;
-    allowed: boolean;
-  };
   rateLimit?: {
     allowed: boolean;
     remaining: number;
@@ -39,7 +34,7 @@ export interface QualificationResult {
 export interface CouncilFormationResult {
   paperId: string;
   councilSize: number;
-  assignedAgents: Array<{
+  reviewers: Array<{
     agentId: string;
     rank: number;
     matchScore: number;
@@ -102,33 +97,13 @@ export async function canReview(
     return { allowed: false, reason: 'Agent reputation not found', matchScore: 0 };
   }
   
-  // 1. Check tier access
-  const tierAllowed = canAccessTier(reputation.tier, paper.tier);
-  if (!tierAllowed) {
-    return {
-      allowed: false,
-      reason: `Insufficient tier: Agent is ${reputation.tier}, paper requires ${paper.tier}`,
-      matchScore: 0,
-      tierCheck: {
-        agentTier: reputation.tier,
-        paperTier: paper.tier,
-        allowed: false,
-      },
-    };
-  }
-  
-  // 2. Check rate limit
+  // 1. Check rate limit (tier check removed - now at conference level)
   const rateCheck = checkRateLimit(reputation.reviewsThisWeek, reputation.tier);
   if (!rateCheck.allowed) {
     return {
       allowed: false,
       reason: `Weekly review limit reached: ${rateCheck.remaining} remaining, resets ${rateCheck.resetsAt.toISOString()}`,
       matchScore: 0,
-      tierCheck: {
-        agentTier: reputation.tier,
-        paperTier: paper.tier,
-        allowed: true,
-      },
       rateLimit: {
         allowed: false,
         remaining: rateCheck.remaining,
@@ -138,9 +113,7 @@ export async function canReview(
   }
   
   // 3. Check skill match
-  const paperSkills = paper.requiredSkills.length > 0 
-    ? paper.requiredSkills 
-    : paper.extractedSkills;
+  const paperSkills = paper.requiredSkills;
   
   if (paperSkills.length === 0) {
     // No skills required - allow but warn
@@ -148,11 +121,6 @@ export async function canReview(
       allowed: true,
       reason: `Qualified (no specific skills required). Tier: ${reputation.tier}`,
       matchScore: 1.0,
-      tierCheck: {
-        agentTier: reputation.tier,
-        paperTier: paper.tier,
-        allowed: true,
-      },
       rateLimit: {
         allowed: true,
         remaining: rateCheck.remaining,
@@ -160,7 +128,7 @@ export async function canReview(
       },
     };
   }
-  
+
   // @ts-ignore
   const match = calculateMatch(paperSkills, agent.skills);
   
@@ -174,11 +142,6 @@ export async function canReview(
         missing: match.missing,
         partial: match.partial,
       },
-      tierCheck: {
-        agentTier: reputation.tier,
-        paperTier: paper.tier,
-        allowed: true,
-      },
       rateLimit: {
         allowed: true,
         remaining: rateCheck.remaining,
@@ -186,7 +149,7 @@ export async function canReview(
       },
     };
   }
-  
+
   // All checks passed
   return {
     allowed: true,
@@ -196,11 +159,6 @@ export async function canReview(
       matched: match.matched,
       missing: match.missing,
       partial: match.partial,
-    },
-    tierCheck: {
-      agentTier: reputation.tier,
-      paperTier: paper.tier,
-      allowed: true,
     },
     rateLimit: {
       allowed: true,
@@ -232,9 +190,7 @@ export async function formCouncil(
     throw new Error(`Paper ${paperId} not found`);
   }
   
-  const paperSkills = paper.requiredSkills.length > 0
-    ? paper.requiredSkills
-    : paper.extractedSkills;
+  const paperSkills = paper.requiredSkills;
   
   // Fetch all active agents with their skills and reputation
   const agents = await prisma.agentConfig.findMany({
@@ -261,15 +217,6 @@ export async function formCouncil(
     // @ts-ignore
     const reputation = agent.reputation;
     if (!reputation) continue;
-    
-    // Check tier access
-    if (!canAccessTier(reputation.tier, paper.tier)) {
-      notAssigned.push({
-        agentId: agent.id,
-        reason: `Tier mismatch: ${reputation.tier} < ${paper.tier}`,
-      });
-      continue;
-    }
     
     // Check rate limit
     const rateCheck = checkRateLimit(reputation.reviewsThisWeek, reputation.tier);
@@ -311,19 +258,18 @@ export async function formCouncil(
   // Select top N
   const assigned = qualified.slice(0, councilSize);
   
-  // Update paper with assigned agents
+  // Update paper with assigned reviewers
   await prisma.paper.update({
     where: { id: paperId },
     data: {
-      assignedAgents: assigned.map(a => a.agentId),
-      status: 'UNDER_REVIEW',
+      reviewers: assigned.map(a => a.agentId),
     },
   });
   
   return {
     paperId,
     councilSize,
-    assignedAgents: assigned.map((a, index) => ({
+    reviewers: assigned.map((a, index) => ({
       ...a,
       rank: index + 1,
     })),
