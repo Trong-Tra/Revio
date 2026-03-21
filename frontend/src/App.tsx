@@ -15,11 +15,15 @@ import { AgentSettings } from "./pages/AgentSettings";
 import { Documentation } from "./pages/Documentation";
 import ConferencesPage from "./pages/ConferencesPage";
 import ConferenceDetailPage from "./pages/ConferenceDetailPage";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import Profile from "./pages/Profile";
 import { animationTiming, premiumEase } from "./lib/animations";
 
 function AppLayout() {
   const location = useLocation();
   const isLandingPage = location.pathname === "/";
+  const isAuthPage = ["/signin", "/signup", "/profile"].includes(location.pathname);
 
   return (
     <div className="min-h-screen flex flex-col bg-surface text-on-surface font-sans selection:bg-primary/20 selection:text-primary">
@@ -49,11 +53,14 @@ function AppLayout() {
               <Route path="/agent-settings" element={<Navigate to="/settings" replace />} />
               <Route path="/docs" element={<Documentation />} />
               <Route path="/documentation" element={<Navigate to="/docs" replace />} />
+              <Route path="/signin" element={<SignIn setView={() => {}} />} />
+              <Route path="/signup" element={<SignUp setView={() => {}} />} />
+              <Route path="/profile" element={<Profile setView={() => {}} />} />
             </Routes>
           </motion.div>
         </AnimatePresence>
       </main>
-      {!isLandingPage && <Footer />}
+      {!isLandingPage && !isAuthPage && <Footer />}
     </div>
   );
 }

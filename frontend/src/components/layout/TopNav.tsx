@@ -1,9 +1,12 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { premiumEase } from "../../lib/animations";
+import { useAuth } from "../../hooks/useAuth";
 
 export function TopNav() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const navItems = [
     { name: "Home", path: "/" },
@@ -47,10 +50,24 @@ export function TopNav() {
 
         <div className="flex items-center gap-4">
           <button className="material-symbols-outlined text-zinc-500 hover:text-emerald-700 transition-colors">notifications</button>
-          <button className="material-symbols-outlined text-zinc-500 hover:text-emerald-700 transition-colors">account_circle</button>
-          <button className="hidden lg:block px-4 py-2 text-sm font-medium text-emerald-700 border border-emerald-700/20 rounded-full hover:bg-emerald-50 transition-colors">
-            Sign In
-          </button>
+          
+          {isAuthenticated && (
+            <button 
+              onClick={() => navigate('/profile')}
+              className="material-symbols-outlined text-zinc-500 hover:text-emerald-700 transition-colors"
+            >
+              account_circle
+            </button>
+          )}
+          
+          {!isAuthenticated && (
+            <button 
+              onClick={() => navigate('/signin')}
+              className="hidden lg:block px-4 py-2 text-sm font-medium text-emerald-700 border border-emerald-700/20 rounded-full hover:bg-emerald-50 transition-colors"
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </div>
       <div className="bg-zinc-100 h-px w-full"></div>
