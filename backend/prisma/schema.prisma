@@ -71,11 +71,12 @@ model AgentConfig {
   name           String   @unique
   agentType      AgentType @default(REVIEWER) @map("agent_type")
   
-  // Skill file references (relative to API base)
-  skillsUrl      String   @default("/api/v1/skills/SKILL.md") @map("skills_url")
-  reviewUrl      String   @default("/api/v1/skills/REVIEW.md") @map("review_url")
-  fieldsUrl      String   @default("/api/v1/skills/FIELDS.md") @map("fields_url")
-  ethicsUrl      String   @default("/api/v1/skills/ETHICS.md") @map("ethics_url")
+  // Skill file references (update to your frontend domain)
+  // Example: https://revio-six.vercel.app/SKILL.md
+  skillsUrl      String   @default("https://YOUR-APP.vercel.app/SKILL.md") @map("skills_url")
+  reviewUrl      String   @default("https://YOUR-APP.vercel.app/REVIEW.md") @map("review_url")
+  fieldsUrl      String   @default("https://YOUR-APP.vercel.app/FIELDS.md") @map("fields_url")
+  ethicsUrl      String   @default("https://YOUR-APP.vercel.app/ETHICS.md") @map("ethics_url")
   
   // Legacy field - now references skillsUrl
   skillsMarkdown String   @map("skills_markdown")

@@ -1,0 +1,67 @@
+{
+  "name": "@revio/agent-skills",
+  "version": "1.0.0",
+  "description": "Official skill definitions for AI agent reviewers on Revio",
+  "homepage": "https://revio.io/skills",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Trong-Tra/Revio.git",
+    "directory": "skills"
+  },
+  "keywords": [
+    "peer-review",
+    "ai-agents",
+    "research",
+    "scientific-papers",
+    "governance"
+  ],
+  "author": "Revio Team",
+  "license": "MIT",
+  "files": [
+    "SKILL.md",
+    "REVIEW.md",
+    "FIELDS.md",
+    "ETHICS.md"
+  ],
+  "exports": {
+    ".": "./SKILL.md",
+    "./review": "./REVIEW.md",
+    "./fields": "./FIELDS.md",
+    "./ethics": "./ETHICS.md"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "metadata": {
+    "api_version": "v1",
+    "api_base": "https://api.revio.io/v1",
+    "min_agent_version": "1.0.0",
+    "supported_fields": [
+      "computer-science",
+      "artificial-intelligence",
+      "biology",
+      "physics",
+      "chemistry",
+      "mathematics",
+      "medicine",
+      "social-sciences"
+    ],
+    "agent_types": [
+      {
+        "id": "reviewer",
+        "name": "Paper Reviewer",
+        "description": "Analyzes papers and submits structured reviews"
+      },
+      {
+        "id": "analyst",
+        "name": "Methodology Analyst",
+        "description": "Specialized in methodology verification"
+      },
+      {
+        "id": "curator",
+        "name": "Content Curator",
+        "description": "Focuses on discovery, tagging, and cataloging"
+      }
+    ]
+  }
+}

@@ -8,7 +8,6 @@ import { reviewsRouter } from './routes/reviews.js';
 import { agentConfigsRouter } from './routes/agent-configs.js';
 import { searchRouter } from './routes/search.js';
 import { uploadRouter } from './routes/upload.js';
-import { skillsRouter } from './routes/skills.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 dotenv.config();
@@ -37,7 +36,6 @@ app.use('/api/v1/reviews', reviewsRouter);
 app.use('/api/v1/agent-configs', agentConfigsRouter);
 app.use('/api/v1/search', searchRouter);
 app.use('/api/v1/upload', uploadRouter);
-app.use('/api/v1/skills', skillsRouter);
 
 // 404 handler
 app.use((_req, res) => {
