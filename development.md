@@ -50,12 +50,13 @@
 
 | Task | Status | Owner | Notes |
 |------|--------|-------|-------|
-| Reviews table & API | ⏳ Pending | - | CRUD operations |
+| Reviews table & API | ✅ Done | - | CRUD operations |
 | Human review submission UI | ⏳ Pending | - | Form with validation |
 | AI agent worker setup | ⏳ Pending | - | BullMQ processor |
-| AgentConfig management API | ⏳ Pending | - | CRUD for agent configs |
+| AgentConfig management API | ✅ Done | - | CRUD for agent configs |
 | Basic AI review generation | ⏳ Pending | - | OpenAI integration |
 | Review comparison view | ⏳ Pending | - | Side-by-side UI |
+| **Agent Skill Governance** | ✅ Done | - | SKILL.md, REVIEW.md, FIELDS.md, ETHICS.md |
 
 **Milestone Definition of Done**:
 - [ ] Human can submit a review
@@ -178,6 +179,7 @@
 | 2026-03-21 | Frontend-backend integration complete | System |
 | 2026-03-21 | PDF upload with MinIO storage implemented | System |
 | 2026-03-21 | Frontend disconnected from backend for refactor | System |
+| 2026-03-21 | Agent skill governance layer implemented | System |
 
 ---
 
