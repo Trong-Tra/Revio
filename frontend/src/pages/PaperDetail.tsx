@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Download, ExternalLink, CheckCircle2, Bot, Users, FileText } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, Bot, Users, FileText } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { Link } from "react-router-dom";
 import { animationTiming, premiumEase } from "../lib/animations";
+import { useAuth } from "../hooks/useAuth";
 
 const mockPapers = [
   {
@@ -15,6 +16,7 @@ const mockPapers = [
     authors: "A. Chen, J. Doe, et al.",
     conferenceId: "neurips-2024",
     conferenceName: "NeurIPS 2024",
+    uploadedByUserId: "user-1",
     abstract:
       "Exploring the convergence of latent representations between vision and language models using contrastive manifold alignment, with an emphasis on robust transfer and interpretability.",
     rating: 4.8,
@@ -26,6 +28,7 @@ const mockPapers = [
     authors: "Dr. Sarah K. Weber",
     conferenceId: "icml-2024",
     conferenceName: "ICML 2024",
+    uploadedByUserId: "user-2",
     abstract:
       "An investigation into collective decision-making in DAOs and the impact of automated voting protocols on minority participation and governance outcomes.",
     rating: 4.2,
@@ -37,6 +40,7 @@ const mockPapers = [
     authors: "L. Zhang, M. Saito",
     conferenceId: "cvpr-2024",
     conferenceName: "CVPR 2024",
+    uploadedByUserId: "user-1",
     abstract:
       "Presenting a scheduling strategy for model parallelization across constrained IoT devices while maintaining inference quality under strict latency budgets.",
     rating: 4.0,
@@ -46,9 +50,10 @@ const mockPapers = [
 
 export function PaperDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
   const paper = mockPapers.find((item) => item.id === id);
-  const ratingProgress = paper ? (paper.rating / 5) * 100 : 0;
+  const canViewResultSection = !!user && !!paper && paper.uploadedByUserId === user.id;
 
   const communityReviews = [
     {
@@ -102,9 +107,9 @@ export function PaperDetail() {
         Back to Discoveries
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className={`grid grid-cols-1 gap-8 ${canViewResultSection ? "lg:grid-cols-3" : "max-w-4xl mx-auto"}`}>
         {/* Main Content Area (PDF Viewer Mockup) */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className={`space-y-6 ${canViewResultSection ? "lg:col-span-2" : ""}`}>
           <header className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <Badge variant="provenance">Verified by Meta-Agent</Badge>
@@ -141,85 +146,53 @@ export function PaperDetail() {
         </div>
 
         {/* Sidebar Area */}
-        <motion.div
-          className="space-y-6"
-          initial={{ x: 30, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: animationTiming.duration.slow, delay: 0.3, ease: premiumEase }}
-        >
-          <Card className="border-t-4 border-t-primary border-outline-variant/30 shadow-ambient">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-primary" />
-                Rating
-              </CardTitle>
-              <CardDescription>Peer-review rubric summary</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-5xl font-label font-bold text-primary mb-4">{paper.rating.toFixed(1)}/5</div>
-              <div className="w-full bg-surface-container-high rounded-full h-2 mb-4">
-                <div className="bg-gradient-to-r from-primary to-primary-container h-2 rounded-full" style={{ width: `${ratingProgress}%` }}></div>
-              </div>
-              <ul className="space-y-2 text-sm text-on-surface-variant mb-4">
-                <li className="flex justify-between"><span>Novelty and Originality</span> <span className="font-medium text-on-surface">4/5</span></li>
-                <li className="flex justify-between"><span>Technical Content and Scientific Rigour</span> <span className="font-medium text-on-surface">5/5</span></li>
-                <li className="flex justify-between"><span>Quality of Presentation</span> <span className="font-medium text-on-surface">4/5</span></li>
-                <li className="flex justify-between"><span>Relevance and Timeliness</span> <span className="font-medium text-on-surface">5/5</span></li>
-              </ul>
-              <div className="rounded-lg border border-outline-variant/40 bg-surface-container-low p-3 flex items-center justify-between">
-                <span className="text-sm text-on-surface-variant">Decision</span>
-                <span className={`text-sm font-semibold ${paper.decision === "Accepted" ? "text-primary" : "text-amber-700"}`}>
-                  {paper.decision}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-outline-variant/30">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="w-5 h-5 text-on-surface-variant" />
-                Machine Readable Meta-Agent
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <motion.div
-                className="bg-on-surface text-surface-container-lowest p-4 rounded-xl font-mono text-xs overflow-x-auto relative"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true, amount: 0.5 }}
-                transition={{ duration: animationTiming.duration.base, ease: premiumEase }}
-              >
+        {canViewResultSection && (
+          <motion.div
+            className="space-y-6"
+            initial={{ x: 30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: animationTiming.duration.slow, delay: 0.3, ease: premiumEase }}
+          >
+            <Card className="border border-outline-variant/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-on-surface-variant" />
+                  Result
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
                 <motion.div
-                  className="absolute inset-y-0 left-0 bg-white/10 pointer-events-none"
-                  initial={{ width: 0 }}
-                  whileInView={{ width: "100%" }}
+                  className="rounded-lg border border-outline-variant/40 bg-surface-container-low p-4"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
                   viewport={{ once: true, amount: 0.5 }}
                   transition={{ duration: animationTiming.duration.base, ease: premiumEase }}
-                />
-                <pre>
-                  {`{
-  "agent_id": "review_bot_alpha",
-  "version": "1.2.4",
-  "findings": [
-    {
-      "type": "methodology",
-      "status": "verified",
-      "confidence": 0.99
-    },
-    {
-      "type": "novelty",
-      "status": "high",
-      "confidence": 0.85
-    }
-  ]
-}`}
-                </pre>
-              </motion.div>
-            </CardContent>
-          </Card>
+                >
+                  <div className="max-h-56 overflow-y-auto scrollbar-hide pr-1">
+                    <p className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-line">
+                      {`The paper demonstrates strong methodological consistency and clear relevance to the conference theme.
 
-        </motion.div>
+Core findings are validated with high confidence, and the proposed approach appears reproducible from the provided details. The remaining concern is breadth of validation under harder edge-case settings, which should be expanded in a revision cycle.`}
+                    </p>
+                  </div>
+                </motion.div>
+                <div className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-3 flex items-center justify-between mt-3">
+                  <span className="text-sm text-on-surface-variant">Decision</span>
+                  <span className={`text-sm font-semibold ${paper.decision === "Accepted" ? "text-primary" : "text-amber-700"}`}>
+                    {paper.decision}
+                  </span>
+                </div>
+                <div className="mt-1 h-0.5 w-full rounded-full bg-surface-container-high overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${paper.decision === "Accepted" ? "bg-primary" : "bg-amber-600"}`}
+                    style={{ width: "100%" }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+          </motion.div>
+        )}
       </div>
 
       <div className="mt-8 space-y-6">

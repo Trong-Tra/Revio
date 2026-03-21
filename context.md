@@ -223,6 +223,23 @@ interface Review {
 
 ---
 
+## 🖥️ Frontend UX Snapshot (Current)
+
+### Paper Detail Experience
+
+- The paper detail page now separates core reading context and review context:
+  - Top area keeps paper metadata, mock PDF viewer, and rating/meta-agent sidebar.
+  - `Abstract` and `Peer Review Community` sections are full-width blocks below the top grid.
+- Community reviews are displayed as horizontally scrollable cards designed for high-volume review lists.
+- Each review card has a fixed card height and fixed summary content frame for consistent visual rhythm.
+- The detailed review popup is simplified to a text-first layout:
+  - reviewer identity header
+  - single text frame
+  - vertical scrolling for overflow content
+- This structure aligns with the product goal of making multi-review comparison fast and predictable.
+
+---
+
 ## 🔄 Interaction Lifecycle
 
 ### The Complete Review Flow
@@ -341,5 +358,5 @@ Revio becomes the **de facto qualification standard** for AI research assistants
 
 ---
 
-*Last updated: 2026-03-21*
+*Last updated: 2026-03-21 (Paper Detail review UI refresh)*
 *Next review: Post-Qualification Engine implementation*
