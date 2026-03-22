@@ -16,9 +16,12 @@ import { Link } from "react-router-dom";
 import { useConferences } from "../hooks/useConferences";
 
 const researchAreas = ["AI", "ML", "Robotics", "Systems", "Vision", "NLP"];
-const statusFilters = ["OPEN", "CLOSE", "UP COMING", "ARCHIVE"] as const;
+const statusFilters = ["ALL", "OPEN", "CLOSE", "UP COMING", "ARCHIVE"] as const;
 
 type ConferenceStatus = (typeof statusFilters)[number];
+
+// Helper to check if we should filter by status or show all
+const isAllFilter = (status: ConferenceStatus) => status === "ALL";
 
 // Map conference tier to status for display
 function getConferenceStatus(tier: string): ConferenceStatus {
@@ -35,7 +38,7 @@ function getConferenceStatus(tier: string): ConferenceStatus {
 }
 
 export default function ConferencesPage() {
-  const [activeStatus, setActiveStatus] = useState<ConferenceStatus>("OPEN");
+  const [activeStatus, setActiveStatus] = useState<ConferenceStatus>("ALL");
   const { conferences, loading, error } = useConferences();
 
   // Transform API conferences to display format
@@ -66,7 +69,9 @@ export default function ConferencesPage() {
     (a, b) => statusOrder[a.status] - statusOrder[b.status]
   );
 
-  const filteredConferences = sortedConferences.filter((conf) => conf.status === activeStatus);
+  const filteredConferences = isAllFilter(activeStatus) 
+    ? sortedConferences 
+    : sortedConferences.filter((conf) => conf.status === activeStatus);
 
   if (loading) {
     return (
@@ -158,7 +163,7 @@ export default function ConferencesPage() {
         {filteredConferences.length === 0 ? (
           <div className="col-span-3 text-center py-12 text-on-surface-variant">
             <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No conferences found with status &quot;{activeStatus}&quot;</p>
+            <p>{isAllFilter(activeStatus) ? "No conferences found" : `No conferences found with status "${activeStatus}"`}</p>
           </div>
         ) : (
           filteredConferences.map((conf, index) => (
